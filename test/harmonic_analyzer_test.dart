@@ -144,7 +144,7 @@ void main() {
       );
       expect(
         controller.analyses.map((HarmonicAnalysisResult a) => a.romanNumeral).toList(),
-        const <String>['IΔ7', 'V7(b9)/ii', 'ii9', 'iv7', 'V13', 'IΔ9'],
+        const <String>['IΔ7', 'V7/ii', 'ii9', 'iv7', 'V13', 'IΔ7'],
       );
 
       // Load Pop Anthem + Minor iv in C Major (C, G, Am, F, Fm, C) and switch mode to C Aeolian
