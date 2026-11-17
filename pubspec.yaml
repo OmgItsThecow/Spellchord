@@ -1,0 +1,19 @@
+name: harmonic_explorer
+description: Cross-platform chord progression, voice leading, and modal interchange explorer built with Flutter and deterministic MIDI music theory algorithms.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true

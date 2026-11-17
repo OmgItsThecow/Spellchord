@@ -1,0 +1,551 @@
+// ignore: deprecated_member_use
+import 'package:flutter/material.dart';
+
+import '../../core/localization/app_strings.dart';
+import '../../core/models/chord_spec.dart';
+import '../../core/models/chord_voicing.dart';
+import '../../core/models/harmonic_function.dart';
+import '../../core/models/midi_pitch.dart';
+import '../../state/explorer_controller.dart';
+import '../theme/dark_theme.dart';
+import 'chord_builder_sheet.dart';
+import 'explained_control.dart';
+
+/// Horizontal interactive timeline of chords adapting between Basic Mode
+/// (note names & plain-language roles) and Advanced Mode (Roman numerals & MIDI numbers).
+class ProgressionTimeline extends StatelessWidget {
+  const ProgressionTimeline({
+    super.key,
+    required this.controller,
+  });
+
+  final ExplorerController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final List<ChordSpec> progression = controller.progression;
+    final List<HarmonicAnalysisResult> analyses = controller.analyses;
+    final List<ChordVoicing> voicings = controller.pianoVoicings;
+    final bool preferFlat = controller.preferFlats;
+    final bool isBasic = controller.isBasicMode;
+    final AppStrings strings = controller.strings;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+      decoration: const BoxDecoration(
+        color: AppDarkTheme.bgPrimary,
+        border: Border(
+          bottom: BorderSide(color: AppDarkTheme.borderSubtle),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Wrap(
+            spacing: 10,
+            runSpacing: 8,
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: <Widget>[
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Flexible(
+                    child: Text(
+                      strings.progressionTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppDarkTheme.textSecondary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.9,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    strings.chordsCount(progression.length),
+                    style: const TextStyle(
+                      color: AppDarkTheme.textMuted,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: <Widget>[
+                  ExplainedControl(
+                    controller: controller,
+                    explanation: strings.editSelectedTip,
+                    child: _ActionPill(
+                      icon: Icons.edit_outlined,
+                      label: strings.editSelectedLabel,
+                      accent: AppDarkTheme.textSecondary,
+                      onTap: () async {
+                        final ChordSpec? current = controller.selectedChord;
+                        if (current == null) {
+                          return;
+                        }
+                        final ChordSpec? edited = await showChordBuilderDialog(
+                          context: context,
+                          strings: strings,
+                          isBasicMode: isBasic,
+                          initialChord: current,
+                          preferFlat: preferFlat,
+                        );
+                        if (edited != null) {
+                          controller.updateChordAt(
+                            controller.selectedChordIndex,
+                            edited,
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                  ExplainedControl(
+                    controller: controller,
+                    explanation: strings.addChordTip,
+                    child: _ActionPill(
+                      icon: Icons.add_rounded,
+                      label: strings.addChordLabel,
+                      accent: AppDarkTheme.tonicColor,
+                      onTap: () async {
+                        final ChordSpec? created = await showChordBuilderDialog(
+                          context: context,
+                          strings: strings,
+                          isBasicMode: isBasic,
+                          preferFlat: preferFlat,
+                        );
+                        if (created != null) {
+                          controller.addChord(created);
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 154,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: progression.length,
+              itemBuilder: (BuildContext context, int index) {
+                final ChordSpec chord = progression[index];
+                final HarmonicAnalysisResult analysis = analyses[index];
+                final ChordVoicing voicing = voicings[index];
+                final bool isSelected = index == controller.selectedChordIndex;
+
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    if (index > 0)
+                      _TransitionConnector(
+                        strings: strings,
+                        totalDistance: voicing.totalSemitoneDistance,
+                        commonTones: voicing.commonToneCount,
+                      ),
+                    _ChordCard(
+                      controller: controller,
+                      strings: strings,
+                      isBasicMode: isBasic,
+                      index: index,
+                      totalCount: progression.length,
+                      chord: chord,
+                      analysis: analysis,
+                      voicing: voicing,
+                      isSelected: isSelected,
+                      preferFlat: preferFlat,
+                      onSelect: () => controller.selectChord(index),
+                      onEdit: () async {
+                        final ChordSpec? edited = await showChordBuilderDialog(
+                          context: context,
+                          strings: strings,
+                          isBasicMode: isBasic,
+                          initialChord: chord,
+                          preferFlat: preferFlat,
+                        );
+                        if (edited != null) {
+                          controller.updateChordAt(index, edited);
+                        }
+                      },
+                      onDelete: progression.length > 1
+                          ? () => controller.removeChordAt(index)
+                          : null,
+                      onMoveLeft: index > 0
+                          ? () => controller.reorderChord(index, index - 1)
+                          : null,
+                      onMoveRight: index < progression.length - 1
+                          ? () => controller.reorderChord(index, index + 1)
+                          : null,
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChordCard extends StatelessWidget {
+  const _ChordCard({
+    required this.controller,
+    required this.strings,
+    required this.isBasicMode,
+    required this.index,
+    required this.totalCount,
+    required this.chord,
+    required this.analysis,
+    required this.voicing,
+    required this.isSelected,
+    required this.preferFlat,
+    required this.onSelect,
+    required this.onEdit,
+    required this.onDelete,
+    required this.onMoveLeft,
+    required this.onMoveRight,
+  });
+
+  final ExplorerController controller;
+  final AppStrings strings;
+  final bool isBasicMode;
+  final int index;
+  final int totalCount;
+  final ChordSpec chord;
+  final HarmonicAnalysisResult analysis;
+  final ChordVoicing voicing;
+  final bool isSelected;
+  final bool preferFlat;
+  final VoidCallback onSelect;
+  final VoidCallback onEdit;
+  final VoidCallback? onDelete;
+  final VoidCallback? onMoveLeft;
+  final VoidCallback? onMoveRight;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color accent = AppDarkTheme.colorForCategory(analysis.category);
+    final bool isManualInv = chord.manualInversion != null;
+    final String displaySymbol = chord.symbol(
+      preferFlat: preferFlat,
+      activeInversion: voicing.inversionIndex,
+    );
+
+    final String roleLabel = isBasicMode
+        ? strings.basicCategoryLabel(analysis.category)
+        : '${analysis.functionLabel} · ${strings.basicCategoryLabel(analysis.category)}';
+
+    return ExplainedControl(
+      controller: controller,
+      explanation: strings.chordCardTip(displaySymbol, analysis.romanNumeral),
+      child: GestureDetector(
+        onTap: onSelect,
+        onDoubleTap: onEdit,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          width: 196,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color:
+                isSelected ? AppDarkTheme.cardElevated : AppDarkTheme.cardSurface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? accent : AppDarkTheme.borderSubtle,
+              width: isSelected ? 1.6 : 1.0,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              // Roman numeral & function badge
+              Row(
+                children: <Widget>[
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: Text(
+                      analysis.romanNumeral,
+                      style: TextStyle(
+                        color: accent,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      roleLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppDarkTheme.textSecondary,
+                        fontSize: 11.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // Chord symbol & quick controls
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      displaySymbol,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppDarkTheme.textPrimary,
+                        fontSize: 19,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                  ),
+                  if (isSelected) ...<Widget>[
+                    if (onMoveLeft != null)
+                      _TinyIconButton(
+                        controller: controller,
+                        icon: Icons.chevron_left_rounded,
+                        onTap: onMoveLeft!,
+                        tooltip: strings.moveLeftTip,
+                      ),
+                    if (onMoveRight != null)
+                      _TinyIconButton(
+                        controller: controller,
+                        icon: Icons.chevron_right_rounded,
+                        onTap: onMoveRight!,
+                        tooltip: strings.moveRightTip,
+                      ),
+                    if (onDelete != null)
+                      _TinyIconButton(
+                        controller: controller,
+                        icon: Icons.close_rounded,
+                        onTap: onDelete!,
+                        tooltip: strings.removeChordTip,
+                      ),
+                  ],
+                ],
+              ),
+              const Spacer(),
+
+              // Inversion badge
+              Row(
+                children: <Widget>[
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isManualInv
+                          ? AppDarkTheme.subdominantColor.withValues(alpha: 0.15)
+                          : AppDarkTheme.bgWorkspace,
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: isManualInv
+                            ? AppDarkTheme.subdominantColor.withValues(alpha: 0.5)
+                            : AppDarkTheme.borderSubtle,
+                      ),
+                    ),
+                    child: Text(
+                      '${strings.shortInversionLabel(voicing.inversionIndex)} · ${isManualInv ? strings.manualTag : strings.autoTag}',
+                      style: TextStyle(
+                        color: isManualInv
+                            ? AppDarkTheme.subdominantColor
+                            : AppDarkTheme.textSecondary,
+                        fontSize: 11.0,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+
+              // Note names (Basic Mode) or Note Name + MIDI integer (Advanced Mode)
+              Wrap(
+                spacing: 4,
+                runSpacing: 3,
+                children: <Widget>[
+                  for (int i = 0; i < voicing.midiNotes.length; i++)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 1.5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: (i == 0
+                                ? AppDarkTheme.rootNoteHighlight
+                                : AppDarkTheme.upperNoteHighlight)
+                            .withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        isBasicMode
+                            ? MidiPitch.pitchClassName(
+                                MidiPitch.pitchClass(voicing.midiNotes[i]),
+                                preferFlat: preferFlat,
+                              )
+                            : '${MidiPitch.midiLabel(voicing.midiNotes[i], preferFlat: preferFlat, includeMidiNumber: false)}:${voicing.midiNotes[i]}',
+                        style: TextStyle(
+                          color: i == 0
+                              ? AppDarkTheme.rootNoteHighlight
+                              : AppDarkTheme.upperNoteHighlight,
+                          fontSize: isBasicMode ? 11.5 : 10.5,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: isBasicMode ? null : 'monospace',
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TransitionConnector extends StatelessWidget {
+  const _TransitionConnector({
+    required this.strings,
+    required this.totalDistance,
+    required this.commonTones,
+  });
+
+  final AppStrings strings;
+  final int totalDistance;
+  final int commonTones;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color distColor = totalDistance <= 4
+        ? AppDarkTheme.commonToneHighlight
+        : (totalDistance <= 8
+            ? AppDarkTheme.tonicColor
+            : AppDarkTheme.subdominantColor);
+
+    return Container(
+      width: 64,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text(
+            '$totalDistance st',
+            style: TextStyle(
+              color: distColor,
+              fontSize: 12.0,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Container(
+            height: 1.5,
+            color: AppDarkTheme.borderSubtle,
+          ),
+          const SizedBox(height: 3),
+          Text(
+            strings.keepCountLabel(commonTones),
+            style: const TextStyle(
+              color: AppDarkTheme.textMuted,
+              fontSize: 11.0,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActionPill extends StatelessWidget {
+  const _ActionPill({
+    required this.icon,
+    required this.label,
+    required this.accent,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color accent;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(7),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        decoration: BoxDecoration(
+          color: AppDarkTheme.cardSurface,
+          borderRadius: BorderRadius.circular(7),
+          border: Border.all(color: AppDarkTheme.borderSubtle),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(icon, size: 14, color: accent),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: TextStyle(
+                color: accent,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TinyIconButton extends StatelessWidget {
+  const _TinyIconButton({
+    required this.controller,
+    required this.icon,
+    required this.onTap,
+    required this.tooltip,
+  });
+
+  final ExplorerController controller;
+  final IconData icon;
+  final VoidCallback onTap;
+  final String tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    return ExplainedControl(
+      controller: controller,
+      explanation: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(4),
+        child: Padding(
+          padding: const EdgeInsets.all(2),
+          child: Icon(icon, size: 16, color: AppDarkTheme.textSecondary),
+        ),
+      ),
+    );
+  }
+}
