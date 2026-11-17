@@ -473,11 +473,181 @@ class ExplorerController extends ChangeNotifier {
   }
 
   void setLockedKey(int tonicPc, ScaleMode mode) {
-    _lockedKeyTonicPc = MidiPitch.pitchClass(tonicPc);
+    final int oldTonic = activeKeyTonicPc;
+    final ScaleMode oldMode = activeKeyMode;
+    final int newTonic = MidiPitch.pitchClass(tonicPc);
+
+    if (newTonic != oldTonic || mode != oldMode) {
+      _progression = _transposeAndAdaptProgression(
+        progression: _progression,
+        oldTonicPc: oldTonic,
+        oldMode: oldMode,
+        newTonicPc: newTonic,
+        newMode: mode,
+      );
+    }
+
+    _lockedKeyTonicPc = newTonic;
     _lockedKeyMode = mode;
     _isKeyLocked = true;
     _recompute();
     notifyListeners();
+  }
+
+  List<ChordSpec> _transposeAndAdaptProgression({
+    required List<ChordSpec> progression,
+    required int oldTonicPc,
+    required ScaleMode oldMode,
+    required int newTonicPc,
+    required ScaleMode newMode,
+  }) {
+    final int deltaSemitones = (newTonicPc - oldTonicPc + 12) % 12;
+
+    // Pure transposition when the scale/mode is unchanged.
+    if (oldMode == newMode) {
+      return progression
+          .map(
+            (ChordSpec chord) => chord.copyWith(
+              rootPc: (chord.normalizedRootPc + deltaSemitones) % 12,
+            ),
+          )
+          .toList();
+    }
+
+    final List<int> oldIntervals = oldMode.semitoneIntervals;
+    final List<int> newIntervals = newMode.semitoneIntervals;
+
+    return progression.map((ChordSpec chord) {
+      final int rel = (chord.normalizedRootPc - oldTonicPc + 12) % 12;
+      final int deg = oldIntervals.indexOf(rel);
+
+      if (deg >= 0) {
+        final int oldRootOff = oldIntervals[deg];
+        final int oldThird =
+            (oldIntervals[(deg + 2) % 7] - oldRootOff + 12) % 12;
+        final int oldFifth =
+            (oldIntervals[(deg + 4) % 7] - oldRootOff + 12) % 12;
+        final int oldSev =
+            (oldIntervals[(deg + 6) % 7] - oldRootOff + 12) % 12;
+
+        final TriadQuality oldDiatonicTriad =
+            _diatonicTriadForIntervals(oldThird, oldFifth);
+        final SeventhQuality oldDiatonicSeventh =
+            _diatonicSeventhForIntervals(oldDiatonicTriad, oldSev);
+
+        final bool isSus = chord.triad == TriadQuality.sus2 ||
+            chord.triad == TriadQuality.sus4;
+        final bool triadMatches = chord.triad == oldDiatonicTriad ||
+            (isSus && oldDiatonicTriad != TriadQuality.diminished);
+        final bool seventhMatches = chord.seventh == SeventhQuality.none ||
+            chord.seventh == oldDiatonicSeventh;
+
+        if (triadMatches && seventhMatches && chord.alterations.isEmpty) {
+          final int newRootOff = newIntervals[deg];
+          final int newRootPc = (newTonicPc + newRootOff) % 12;
+          final int newThird =
+              (newIntervals[(deg + 2) % 7] - newRootOff + 12) % 12;
+          final int newFifth =
+              (newIntervals[(deg + 4) % 7] - newRootOff + 12) % 12;
+          final int newSev =
+              (newIntervals[(deg + 6) % 7] - newRootOff + 12) % 12;
+
+          final TriadQuality newDiatonicTriad =
+              _diatonicTriadForIntervals(newThird, newFifth);
+          final SeventhQuality newDiatonicSeventh =
+              _diatonicSeventhForIntervals(newDiatonicTriad, newSev);
+
+          final TriadQuality updatedTriad =
+              (isSus && newDiatonicTriad != TriadQuality.diminished)
+                  ? chord.triad
+                  : newDiatonicTriad;
+          final SeventhQuality updatedSeventh =
+              chord.seventh == SeventhQuality.none
+                  ? SeventhQuality.none
+                  : newDiatonicSeventh;
+
+          final Set<ChordExtension> updatedExtensions =
+              updatedTriad == TriadQuality.diminished
+                  ? chord.extensions
+                      .where(
+                        (ChordExtension e) =>
+                            e != ChordExtension.ninth &&
+                            e != ChordExtension.add9 &&
+                            e != ChordExtension.thirteenth,
+                      )
+                      .toSet()
+                  : chord.extensions;
+
+          return chord.copyWith(
+            rootPc: newRootPc,
+            triad: updatedTriad,
+            seventh: updatedSeventh,
+            extensions: Set<ChordExtension>.unmodifiable(updatedExtensions),
+          );
+        }
+      }
+
+      // Secondary dominant targeting a scale degree of oldMode: keep it
+      // targeting the corresponding degree in newMode.
+      final bool isDomStructure = (chord.triad == TriadQuality.major ||
+              chord.triad == TriadQuality.sus4) &&
+          (chord.seventh == SeventhQuality.none ||
+              chord.seventh == SeventhQuality.dominant7);
+      if (isDomStructure) {
+        final int targetRel = (rel + 5) % 12;
+        final int targetDeg = oldIntervals.indexOf(targetRel);
+        if (targetDeg > 0) {
+          final int newTargetRootPc =
+              (newTonicPc + newIntervals[targetDeg]) % 12;
+          return chord.copyWith(
+            rootPc: (newTargetRootPc + 7) % 12,
+          );
+        }
+      }
+
+      // Non-diatonic / borrowed / passing chords transpose relative to tonic.
+      return chord.copyWith(
+        rootPc: (chord.normalizedRootPc + deltaSemitones) % 12,
+      );
+    }).toList();
+  }
+
+  static TriadQuality _diatonicTriadForIntervals(int third, int fifth) {
+    if (third == 4 && fifth == 7) {
+      return TriadQuality.major;
+    }
+    if (third == 3 && fifth == 7) {
+      return TriadQuality.minor;
+    }
+    if (third == 3 && fifth == 6) {
+      return TriadQuality.diminished;
+    }
+    if (third == 4 && fifth == 8) {
+      return TriadQuality.augmented;
+    }
+    return TriadQuality.major;
+  }
+
+  static SeventhQuality _diatonicSeventhForIntervals(
+    TriadQuality triad,
+    int seventhSemitones,
+  ) {
+    if (triad == TriadQuality.major) {
+      return seventhSemitones == 11
+          ? SeventhQuality.major7
+          : SeventhQuality.dominant7;
+    }
+    if (triad == TriadQuality.minor) {
+      return seventhSemitones == 11
+          ? SeventhQuality.minorMajor7
+          : SeventhQuality.minor7;
+    }
+    if (triad == TriadQuality.diminished) {
+      return seventhSemitones == 9
+          ? SeventhQuality.diminished7
+          : SeventhQuality.halfDiminished7;
+    }
+    return SeventhQuality.dominant7;
   }
 
   void substituteWithBorrowedChord(BorrowedChordSuggestion suggestion) {

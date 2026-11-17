@@ -76,12 +76,12 @@ class AppStrings {
   }
 
   String get keyRootTip => isEs
-      ? 'Elige y fija la nota tónica central para el análisis armónico y de acordes prestados.'
-      : 'Select and lock the tonal center root note for harmonic and modal analysis.';
+      ? 'Elige la nota tónica para transponer los acordes de la progresión y actualizar el análisis.'
+      : 'Select the tonal center root note to transpose the progression chords and update analysis.';
 
   String get keyScaleTip => isEs
-      ? 'Elige y fija la escala o modo de referencia para el análisis armónico.'
-      : 'Choose and lock the reference scale or mode for harmonic analysis.';
+      ? 'Elige la escala o modo para adaptar los acordes diatónicos y el análisis armónico.'
+      : 'Choose the scale or mode to adapt diatonic chords and harmonic analysis.';
 
   String keyLockTip(bool isLocked) {
     if (isLocked) {

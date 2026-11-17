@@ -124,6 +124,39 @@ void main() {
       await controller.deleteUserPreset('My Custom Jam', persist: false);
       expect(controller.userPresetNames, isNot(contains('My Custom Jam')));
     });
+
+    test('switching tonality transposes chords and adapts diatonic scale modes', () {
+      final ExplorerController controller =
+          ExplorerController(loadPersistedPresets: false);
+      addTearDown(controller.dispose);
+
+      // Default preset is ii-V-I + Sec Dom in C Major:
+      // Cmaj7, A7(b9), Dm9, Fm7, G13, Cmaj9
+      expect(controller.activeKeyTonicPc, 0);
+      expect(controller.activeKeyMode, ScaleMode.ionian);
+
+      // Switch root from C (0) to D (2) in Ionian: all chords transpose +2 semitones
+      controller.setLockedKey(2, ScaleMode.ionian);
+      expect(controller.activeKeyTonicPc, 2);
+      expect(
+        controller.progression.map((ChordSpec c) => c.baseSymbol()).toList(),
+        const <String>['Dmaj7', 'B7(b9)', 'Em9', 'Gm7', 'A13', 'Dmaj9'],
+      );
+      expect(
+        controller.analyses.map((HarmonicAnalysisResult a) => a.romanNumeral).toList(),
+        const <String>['IΔ7', 'V7(b9)/ii', 'ii9', 'iv7', 'V13', 'IΔ9'],
+      );
+
+      // Load Pop Anthem + Minor iv in C Major (C, G, Am, F, Fm, C) and switch mode to C Aeolian
+      controller.loadPresetProgression('Pop Anthem + Minor iv');
+      controller.setLockedKey(0, ScaleMode.aeolian);
+      expect(
+        controller.progression
+            .map((ChordSpec c) => c.baseSymbol(preferFlat: true))
+            .toList(),
+        const <String>['Cm', 'Gm', 'Ab', 'Fm', 'Fm', 'Cm'],
+      );
+    });
   });
 
   group('Android Layout Overflow Regression', () {
