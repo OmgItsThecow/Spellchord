@@ -30,3 +30,9 @@ flutter run -d linux
 flutter run -d windows
 flutter run -d android
 ```
+
+## License
+
+Copyright (C) 2026 **SniffingWizard** and **OMGitstheCow**.
+
+This project is licensed under the **GNU General Public License v3.0 (GPL-3.0)** — see the [LICENSE](LICENSE) file for details.
