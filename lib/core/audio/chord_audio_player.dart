@@ -1,6 +1,8 @@
-import 'dart:typed_data';
+import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
 
 import 'chord_synthesizer.dart';
 
@@ -11,11 +13,14 @@ class ChordAudioPlayer {
   AudioPlayer? _player;
   bool _disposed = false;
 
+  static bool get _isTestEnvironment =>
+      !kIsWeb && Platform.environment.containsKey('FLUTTER_TEST');
+
   Future<void> playChord({
     required List<int> midiNotes,
     required SynthInstrument instrument,
   }) async {
-    if (_disposed || midiNotes.isEmpty) {
+    if (_disposed || midiNotes.isEmpty || _isTestEnvironment) {
       return;
     }
 
@@ -24,18 +29,24 @@ class ChordAudioPlayer {
       instrument: instrument,
     );
 
-    try {
-      final AudioPlayer player = _player ??= AudioPlayer();
-      await player.stop();
-      await player.play(BytesSource(wavBytes, mimeType: 'audio/wav'));
-    } catch (_) {
-      // Gracefully ignore missing plugin channels in unit/widget tests or
-      // environments without an active audio output device.
-    }
+    await runZonedGuarded<Future<void>>(
+      () async {
+        try {
+          final AudioPlayer player = _player ??= AudioPlayer();
+          await player.stop();
+          await player.play(BytesSource(wavBytes, mimeType: 'audio/wav'));
+        } catch (_) {
+          // Ignore platform audio errors if no audio device is available.
+        }
+      },
+      (Object error, StackTrace stack) {
+        // Swallow unawaited plugin channel errors from AudioPlayer._create().
+      },
+    );
   }
 
   Future<void> stop() async {
-    if (_disposed || _player == null) {
+    if (_disposed || _player == null || _isTestEnvironment) {
       return;
     }
     try {
