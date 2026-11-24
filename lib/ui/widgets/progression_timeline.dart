@@ -81,6 +81,33 @@ class ProgressionTimeline extends StatelessWidget {
                 children: <Widget>[
                   ExplainedControl(
                     controller: controller,
+                    explanation: strings.playChordTip,
+                    child: _ActionPill(
+                      icon: Icons.volume_up_rounded,
+                      label: strings.playChordLabel,
+                      accent: AppDarkTheme.commonToneHighlight,
+                      onTap: () => controller.playSelectedChord(force: true),
+                    ),
+                  ),
+                  ExplainedControl(
+                    controller: controller,
+                    explanation:
+                        strings.playProgressionTip(controller.isPlayingProgression),
+                    child: _ActionPill(
+                      icon: controller.isPlayingProgression
+                          ? Icons.stop_rounded
+                          : Icons.play_arrow_rounded,
+                      label: controller.isPlayingProgression
+                          ? strings.stopPlaybackLabel
+                          : strings.playAllLabel,
+                      accent: controller.isPlayingProgression
+                          ? AppDarkTheme.subdominantColor
+                          : AppDarkTheme.borrowedColor,
+                      onTap: controller.togglePlayProgression,
+                    ),
+                  ),
+                  ExplainedControl(
+                    controller: controller,
                     explanation: strings.editSelectedTip,
                     child: _ActionPill(
                       icon: Icons.edit_outlined,

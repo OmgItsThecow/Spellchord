@@ -187,6 +187,9 @@ class AppStrings {
 
   String get editSelectedLabel => isEs ? 'Editar' : 'Edit Selected';
   String get addChordLabel => isEs ? 'Añadir Acorde' : 'Add Chord';
+  String get playChordLabel => isEs ? 'Sonar' : 'Play';
+  String get playAllLabel => isEs ? 'Reproducir' : 'Play All';
+  String get stopPlaybackLabel => isEs ? 'Detener' : 'Stop';
 
   String get editSelectedTip => isEs
       ? 'Cambiar la nota raíz, calidad o notas del acorde seleccionado.'
@@ -195,6 +198,37 @@ class AppStrings {
   String get addChordTip => isEs
       ? 'Construir y agregar un nuevo acorde al final de la progresión.'
       : 'Build and append a new chord to the progression.';
+
+  String get playChordTip => isEs
+      ? 'Escuchar el acorde seleccionado con el timbre del instrumento activo (Piano o Guitarra).'
+      : 'Hear the selected chord using the active instrument timbre (Piano or Guitar).';
+
+  String playProgressionTip(bool isPlaying) {
+    if (isPlaying) {
+      return isEs
+          ? 'Detener la reproducción de la progresión.'
+          : 'Stop progression playback.';
+    }
+    return isEs
+        ? 'Reproducir toda la progresión en orden usando el instrumento activo.'
+        : 'Play through the entire chord progression in order using the active instrument.';
+  }
+
+  String soundToggleTip(bool enabled) => isEs
+      ? (enabled
+          ? 'Silenciar el audio automático de los acordes.'
+          : 'Activar el audio sintetizado de piano y guitarra.')
+      : (enabled
+          ? 'Mute automatic chord audio playback.'
+          : 'Enable synthesized piano and guitar chord audio.');
+
+  String soundToggleFeedback(bool enabled) => isEs
+      ? (enabled
+          ? 'Audio activado (Piano y Guitarra sintetizados).'
+          : 'Audio silenciado.')
+      : (enabled
+          ? 'Audio enabled (Synthesized Piano & Guitar).'
+          : 'Audio muted.');
 
   String basicCategoryLabel(HarmonicCategory category) {
     switch (category) {

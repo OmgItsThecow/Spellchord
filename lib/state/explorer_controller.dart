@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
+import '../core/audio/chord_audio_player.dart';
+import '../core/audio/chord_synthesizer.dart';
 import '../core/engine/guitar_voicing_solver.dart';
 import '../core/engine/harmonic_analyzer.dart';
 import '../core/engine/improvisation_scale_engine.dart';
@@ -77,6 +81,11 @@ class ExplorerController extends ChangeNotifier {
       List<bool>.from(GuitarStringMaskPreset.allSix.mask);
   List<GuitarVoicing> _guitarVoicings = <GuitarVoicing>[];
 
+  final ChordAudioPlayer _audioPlayer = ChordAudioPlayer();
+  bool _soundEnabled = true;
+  bool _isPlayingProgression = false;
+  Timer? _progressionTimer;
+
   String _activeHelpMessage =
       'Hover over (desktop) or long-press (Android) any button or control to see what it does.';
 
@@ -89,12 +98,97 @@ class ExplorerController extends ChangeNotifier {
 
   // --- Read-only Getters ---
 
+  bool get soundEnabled => _soundEnabled;
+  bool get isPlayingProgression => _isPlayingProgression;
   AppLanguage get language => _language;
   bool get hasDismissedCredits => _hasDismissedCredits;
   bool get isSecretRockPrimed => _secretRockPrimed;
   bool get isSecretImprovRevealed => _secretImprovRevealed;
   ImprovisationInsightResult? get improvInsight => _improvInsight;
   bool get hasSelectedLanguage => _hasSelectedLanguage;
+
+  @override
+  void dispose() {
+    _progressionTimer?.cancel();
+    _progressionTimer = null;
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  void toggleSound() {
+    _soundEnabled = !_soundEnabled;
+    if (!_soundEnabled) {
+      stopProgressionPlayback();
+      unawaited(_audioPlayer.stop());
+    }
+    _activeHelpMessage = strings.soundToggleFeedback(_soundEnabled);
+    notifyListeners();
+  }
+
+  void playSelectedChord({bool force = false}) {
+    if (!_soundEnabled && !force) {
+      return;
+    }
+    final bool isGuitar = _visualizerMode == VisualizerMode.guitar;
+    final List<int> notes = isGuitar
+        ? (selectedGuitarVoicing?.activeMidiPitches.isNotEmpty == true
+            ? selectedGuitarVoicing!.activeMidiPitches
+            : (selectedPianoVoicing?.midiNotes ?? const <int>[]))
+        : (selectedPianoVoicing?.midiNotes ?? const <int>[]);
+    if (notes.isEmpty) {
+      return;
+    }
+    unawaited(
+      _audioPlayer.playChord(
+        midiNotes: notes,
+        instrument:
+            isGuitar ? SynthInstrument.guitar : SynthInstrument.piano,
+      ),
+    );
+  }
+
+  void stopProgressionPlayback() {
+    _progressionTimer?.cancel();
+    _progressionTimer = null;
+    if (_isPlayingProgression) {
+      _isPlayingProgression = false;
+      notifyListeners();
+    }
+  }
+
+  void togglePlayProgression() {
+    if (_isPlayingProgression) {
+      stopProgressionPlayback();
+      unawaited(_audioPlayer.stop());
+      return;
+    }
+    if (_progression.isEmpty) {
+      return;
+    }
+    if (!_soundEnabled) {
+      _soundEnabled = true;
+    }
+    _isPlayingProgression = true;
+    _selectedChordIndex = 0;
+    _recomputeSelectionDetails();
+    notifyListeners();
+    playSelectedChord(force: true);
+
+    _progressionTimer = Timer.periodic(
+      const Duration(milliseconds: 950),
+      (Timer timer) {
+        if (!_isPlayingProgression ||
+            _selectedChordIndex + 1 >= _progression.length) {
+          stopProgressionPlayback();
+          return;
+        }
+        _selectedChordIndex += 1;
+        _recomputeSelectionDetails();
+        notifyListeners();
+        playSelectedChord(force: true);
+      },
+    );
+  }
 
   void dismissCredits({bool secretRockTap = false}) {
     if (secretRockTap) {
@@ -291,31 +385,38 @@ class ExplorerController extends ChangeNotifier {
     if (index < 0 || index >= _progression.length) {
       return;
     }
+    stopProgressionPlayback();
     if (_selectedChordIndex == index) {
+      playSelectedChord();
       return;
     }
     _selectedChordIndex = index;
     _recomputeSelectionDetails();
     notifyListeners();
+    playSelectedChord();
   }
 
   void addChord(ChordSpec chord) {
+    stopProgressionPlayback();
     _progression.add(chord);
     _activePresetName = null;
     _selectedChordIndex = _progression.length - 1;
     _recompute();
     notifyListeners();
+    playSelectedChord();
   }
 
   void updateChordAt(int index, ChordSpec updated) {
     if (index < 0 || index >= _progression.length) {
       return;
     }
+    stopProgressionPlayback();
     _progression[index] = updated;
     _activePresetName = null;
     _selectedChordIndex = index;
     _recompute();
     notifyListeners();
+    playSelectedChord();
   }
 
   void removeChordAt(int index) {
@@ -417,6 +518,9 @@ class ExplorerController extends ChangeNotifier {
           );
     _recompute();
     notifyListeners();
+    if (chordIndex == _selectedChordIndex) {
+      playSelectedChord();
+    }
   }
 
   void stepInversion(int chordIndex, int delta) {
@@ -445,6 +549,9 @@ class ExplorerController extends ChangeNotifier {
     _progression[chordIndex] = current.copyWith(voicingVariantIndex: nextVariant);
     _recompute();
     notifyListeners();
+    if (chordIndex == _selectedChordIndex) {
+      playSelectedChord();
+    }
   }
 
   void resetAllInversionsToOptimal() {
@@ -654,6 +761,7 @@ class ExplorerController extends ChangeNotifier {
     if (_selectedChordIndex < 0 || _selectedChordIndex >= _progression.length) {
       return;
     }
+    stopProgressionPlayback();
     final ChordSpec old = _progression[_selectedChordIndex];
     _progression[_selectedChordIndex] = suggestion.chord.copyWith(
       id: old.id,
@@ -662,6 +770,7 @@ class ExplorerController extends ChangeNotifier {
     );
     _recompute();
     notifyListeners();
+    playSelectedChord();
   }
 
   void setModalFilter(ScaleMode? mode) {
@@ -677,6 +786,7 @@ class ExplorerController extends ChangeNotifier {
     }
     _visualizerMode = mode;
     notifyListeners();
+    playSelectedChord();
   }
 
   void toggleGuitarString(int stringIndex) {

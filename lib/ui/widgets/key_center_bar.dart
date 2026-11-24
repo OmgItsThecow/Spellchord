@@ -184,6 +184,40 @@ class KeyCenterBar extends StatelessWidget {
                 ),
               ),
 
+              // Audio mute/unmute toggle
+              ExplainedControl(
+                controller: controller,
+                explanation: strings.soundToggleTip(controller.soundEnabled),
+                child: InkWell(
+                  onTap: controller.toggleSound,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 6.5),
+                    decoration: BoxDecoration(
+                      color: controller.soundEnabled
+                          ? AppDarkTheme.tonicColor.withValues(alpha: 0.14)
+                          : AppDarkTheme.cardSurface,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: controller.soundEnabled
+                            ? AppDarkTheme.tonicColor.withValues(alpha: 0.45)
+                            : AppDarkTheme.borderSubtle,
+                      ),
+                    ),
+                    child: Icon(
+                      controller.soundEnabled
+                          ? Icons.volume_up_rounded
+                          : Icons.volume_off_rounded,
+                      size: 15,
+                      color: controller.soundEnabled
+                          ? AppDarkTheme.tonicColor
+                          : AppDarkTheme.textMuted,
+                    ),
+                  ),
+                ),
+              ),
+
               // Key center detection & locking controls
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
