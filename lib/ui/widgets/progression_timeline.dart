@@ -202,6 +202,7 @@ class _ChordCard extends StatelessWidget {
     required this.controller,
     required this.strings,
     required this.isBasicMode,
+    required this.isCompact,
     required this.index,
     required this.totalCount,
     required this.chord,
@@ -219,6 +220,7 @@ class _ChordCard extends StatelessWidget {
   final ExplorerController controller;
   final AppStrings strings;
   final bool isBasicMode;
+  final bool isCompact;
   final int index;
   final int totalCount;
   final ChordSpec chord;
@@ -253,8 +255,8 @@ class _ChordCard extends StatelessWidget {
         onDoubleTap: onEdit,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 140),
-          width: 196,
-          padding: const EdgeInsets.all(10),
+          width: isCompact ? 132 : 196,
+          padding: EdgeInsets.all(isCompact ? 8 : 10),
           decoration: BoxDecoration(
             color:
                 isSelected ? AppDarkTheme.cardElevated : AppDarkTheme.cardSurface,
@@ -271,8 +273,10 @@ class _ChordCard extends StatelessWidget {
               Row(
                 children: <Widget>[
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isCompact ? 5 : 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: accent.withValues(alpha: 0.16),
                       borderRadius: BorderRadius.circular(5),
@@ -281,26 +285,26 @@ class _ChordCard extends StatelessWidget {
                       analysis.romanNumeral,
                       style: TextStyle(
                         color: accent,
-                        fontSize: 12.5,
+                        fontSize: isCompact ? 11.5 : 12.5,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  SizedBox(width: isCompact ? 4 : 6),
                   Expanded(
                     child: Text(
                       roleLabel,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppDarkTheme.textSecondary,
-                        fontSize: 11.5,
+                        fontSize: isCompact ? 10.5 : 11.5,
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: isCompact ? 5 : 8),
 
               // Chord symbol & quick controls
               Row(
@@ -311,9 +315,9 @@ class _ChordCard extends StatelessWidget {
                       displaySymbol,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppDarkTheme.textPrimary,
-                        fontSize: 19,
+                        fontSize: isCompact ? 16 : 19,
                         fontWeight: FontWeight.w700,
                         letterSpacing: -0.3,
                       ),
@@ -326,6 +330,7 @@ class _ChordCard extends StatelessWidget {
                         icon: Icons.chevron_left_rounded,
                         onTap: onMoveLeft!,
                         tooltip: strings.moveLeftTip,
+                        compact: isCompact,
                       ),
                     if (onMoveRight != null)
                       _TinyIconButton(
@@ -333,6 +338,7 @@ class _ChordCard extends StatelessWidget {
                         icon: Icons.chevron_right_rounded,
                         onTap: onMoveRight!,
                         tooltip: strings.moveRightTip,
+                        compact: isCompact,
                       ),
                     if (onDelete != null)
                       _TinyIconButton(
@@ -340,6 +346,7 @@ class _ChordCard extends StatelessWidget {
                         icon: Icons.close_rounded,
                         onTap: onDelete!,
                         tooltip: strings.removeChordTip,
+                        compact: isCompact,
                       ),
                   ],
                 ],
@@ -349,44 +356,49 @@ class _ChordCard extends StatelessWidget {
               // Inversion badge
               Row(
                 children: <Widget>[
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: isManualInv
-                          ? AppDarkTheme.subdominantColor.withValues(alpha: 0.15)
-                          : AppDarkTheme.bgWorkspace,
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(
+                  Flexible(
+                    child: Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(
                         color: isManualInv
-                            ? AppDarkTheme.subdominantColor.withValues(alpha: 0.5)
-                            : AppDarkTheme.borderSubtle,
+                            ? AppDarkTheme.subdominantColor.withValues(alpha: 0.15)
+                            : AppDarkTheme.bgWorkspace,
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: isManualInv
+                              ? AppDarkTheme.subdominantColor
+                                  .withValues(alpha: 0.5)
+                              : AppDarkTheme.borderSubtle,
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      '${strings.shortInversionLabel(voicing.inversionIndex)} · ${isManualInv ? strings.manualTag : strings.autoTag}',
-                      style: TextStyle(
-                        color: isManualInv
-                            ? AppDarkTheme.subdominantColor
-                            : AppDarkTheme.textSecondary,
-                        fontSize: 11.0,
-                        fontWeight: FontWeight.w600,
+                      child: Text(
+                        '${strings.shortInversionLabel(voicing.inversionIndex)} · ${isManualInv ? strings.manualTag : strings.autoTag}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: isManualInv
+                              ? AppDarkTheme.subdominantColor
+                              : AppDarkTheme.textSecondary,
+                          fontSize: isCompact ? 10.0 : 11.0,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
+              SizedBox(height: isCompact ? 4 : 6),
 
               // Note names (Basic Mode) or Note Name + MIDI integer (Advanced Mode)
               Wrap(
-                spacing: 4,
-                runSpacing: 3,
+                spacing: isCompact ? 3 : 4,
+                runSpacing: isCompact ? 2 : 3,
                 children: <Widget>[
                   for (int i = 0; i < voicing.midiNotes.length; i++)
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 5,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isCompact ? 4 : 5,
                         vertical: 1.5,
                       ),
                       decoration: BoxDecoration(
@@ -407,7 +419,9 @@ class _ChordCard extends StatelessWidget {
                           color: i == 0
                               ? AppDarkTheme.rootNoteHighlight
                               : AppDarkTheme.upperNoteHighlight,
-                          fontSize: isBasicMode ? 11.5 : 10.5,
+                          fontSize: isCompact
+                              ? (isBasicMode ? 10.5 : 9.5)
+                              : (isBasicMode ? 11.5 : 10.5),
                           fontWeight: FontWeight.w600,
                           fontFamily: isBasicMode ? null : 'monospace',
                         ),
@@ -428,11 +442,13 @@ class _TransitionConnector extends StatelessWidget {
     required this.strings,
     required this.totalDistance,
     required this.commonTones,
+    required this.isCompact,
   });
 
   final AppStrings strings;
   final int totalDistance;
   final int commonTones;
+  final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
@@ -443,17 +459,20 @@ class _TransitionConnector extends StatelessWidget {
             : AppDarkTheme.subdominantColor);
 
     return Container(
-      width: 64,
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      width: isCompact ? 38 : 64,
+      padding: EdgeInsets.symmetric(horizontal: isCompact ? 2 : 4),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          Text(
-            '$totalDistance st',
-            style: TextStyle(
-              color: distColor,
-              fontSize: 12.0,
-              fontWeight: FontWeight.w700,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              '$totalDistance st',
+              style: TextStyle(
+                color: distColor,
+                fontSize: isCompact ? 11.0 : 12.0,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
           const SizedBox(height: 3),
@@ -462,11 +481,14 @@ class _TransitionConnector extends StatelessWidget {
             color: AppDarkTheme.borderSubtle,
           ),
           const SizedBox(height: 3),
-          Text(
-            strings.keepCountLabel(commonTones),
-            style: const TextStyle(
-              color: AppDarkTheme.textMuted,
-              fontSize: 11.0,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              strings.keepCountLabel(commonTones),
+              style: TextStyle(
+                color: AppDarkTheme.textMuted,
+                fontSize: isCompact ? 10.0 : 11.0,
+              ),
             ),
           ),
         ],
@@ -526,12 +548,14 @@ class _TinyIconButton extends StatelessWidget {
     required this.icon,
     required this.onTap,
     required this.tooltip,
+    this.compact = false,
   });
 
   final ExplorerController controller;
   final IconData icon;
   final VoidCallback onTap;
   final String tooltip;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -542,8 +566,12 @@ class _TinyIconButton extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(4),
         child: Padding(
-          padding: const EdgeInsets.all(2),
-          child: Icon(icon, size: 16, color: AppDarkTheme.textSecondary),
+          padding: EdgeInsets.all(compact ? 1 : 2),
+          child: Icon(
+            icon,
+            size: compact ? 14 : 16,
+            color: AppDarkTheme.textSecondary,
+          ),
         ),
       ),
     );
