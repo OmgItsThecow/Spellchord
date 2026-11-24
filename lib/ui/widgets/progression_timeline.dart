@@ -132,64 +132,73 @@ class ProgressionTimeline extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          SizedBox(
-            height: 154,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: progression.length,
-              itemBuilder: (BuildContext context, int index) {
-                final ChordSpec chord = progression[index];
-                final HarmonicAnalysisResult analysis = analyses[index];
-                final ChordVoicing voicing = voicings[index];
-                final bool isSelected = index == controller.selectedChordIndex;
+          LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints constraints) {
+              final bool isCompact = constraints.maxWidth < 600;
+              return SizedBox(
+                height: isCompact ? 158 : 154,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: progression.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    final ChordSpec chord = progression[index];
+                    final HarmonicAnalysisResult analysis = analyses[index];
+                    final ChordVoicing voicing = voicings[index];
+                    final bool isSelected =
+                        index == controller.selectedChordIndex;
 
-                return Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    if (index > 0)
-                      _TransitionConnector(
-                        strings: strings,
-                        totalDistance: voicing.totalSemitoneDistance,
-                        commonTones: voicing.commonToneCount,
-                      ),
-                    _ChordCard(
-                      controller: controller,
-                      strings: strings,
-                      isBasicMode: isBasic,
-                      index: index,
-                      totalCount: progression.length,
-                      chord: chord,
-                      analysis: analysis,
-                      voicing: voicing,
-                      isSelected: isSelected,
-                      preferFlat: preferFlat,
-                      onSelect: () => controller.selectChord(index),
-                      onEdit: () async {
-                        final ChordSpec? edited = await showChordBuilderDialog(
-                          context: context,
+                    return Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        if (index > 0)
+                          _TransitionConnector(
+                            strings: strings,
+                            totalDistance: voicing.totalSemitoneDistance,
+                            commonTones: voicing.commonToneCount,
+                            isCompact: isCompact,
+                          ),
+                        _ChordCard(
+                          controller: controller,
                           strings: strings,
                           isBasicMode: isBasic,
-                          initialChord: chord,
+                          isCompact: isCompact,
+                          index: index,
+                          totalCount: progression.length,
+                          chord: chord,
+                          analysis: analysis,
+                          voicing: voicing,
+                          isSelected: isSelected,
                           preferFlat: preferFlat,
-                        );
-                        if (edited != null) {
-                          controller.updateChordAt(index, edited);
-                        }
-                      },
-                      onDelete: progression.length > 1
-                          ? () => controller.removeChordAt(index)
-                          : null,
-                      onMoveLeft: index > 0
-                          ? () => controller.reorderChord(index, index - 1)
-                          : null,
-                      onMoveRight: index < progression.length - 1
-                          ? () => controller.reorderChord(index, index + 1)
-                          : null,
-                    ),
-                  ],
-                );
-              },
-            ),
+                          onSelect: () => controller.selectChord(index),
+                          onEdit: () async {
+                            final ChordSpec? edited =
+                                await showChordBuilderDialog(
+                              context: context,
+                              strings: strings,
+                              isBasicMode: isBasic,
+                              initialChord: chord,
+                              preferFlat: preferFlat,
+                            );
+                            if (edited != null) {
+                              controller.updateChordAt(index, edited);
+                            }
+                          },
+                          onDelete: progression.length > 1
+                              ? () => controller.removeChordAt(index)
+                              : null,
+                          onMoveLeft: index > 0
+                              ? () => controller.reorderChord(index, index - 1)
+                              : null,
+                          onMoveRight: index < progression.length - 1
+                              ? () => controller.reorderChord(index, index + 1)
+                              : null,
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              );
+            },
           ),
         ],
       ),
