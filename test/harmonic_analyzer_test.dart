@@ -105,8 +105,10 @@ void main() {
     });
 
     test('ExplorerController saves, loads, and deletes custom user presets', () async {
-      final ExplorerController controller =
-          ExplorerController(loadPersistedPresets: false);
+      final ExplorerController controller = ExplorerController(
+        loadPersistedPresets: false,
+        enableAudio: false,
+      );
       controller.addChord(ChordSpec.minor7(5, id: 'extra_fm7'));
       final int savedLength = controller.progression.length;
 
@@ -126,8 +128,10 @@ void main() {
     });
 
     test('switching tonality transposes chords and adapts diatonic scale modes', () {
-      final ExplorerController controller =
-          ExplorerController(loadPersistedPresets: false);
+      final ExplorerController controller = ExplorerController(
+        loadPersistedPresets: false,
+        enableAudio: false,
+      );
       addTearDown(controller.dispose);
 
       // Default preset is ii-V-I + Sec Dom in C Major:
@@ -173,8 +177,10 @@ void main() {
           addTearDown(tester.view.resetPhysicalSize);
           addTearDown(tester.view.resetDevicePixelRatio);
 
-          final ExplorerController controller =
-              ExplorerController(loadPersistedPresets: false);
+          final ExplorerController controller = ExplorerController(
+            loadPersistedPresets: false,
+            enableAudio: false,
+          );
           addTearDown(controller.dispose);
 
           await tester.pumpWidget(
@@ -242,8 +248,10 @@ void main() {
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
 
-        final ExplorerController controller =
-            ExplorerController(loadPersistedPresets: false);
+        final ExplorerController controller = ExplorerController(
+          loadPersistedPresets: false,
+          enableAudio: false,
+        );
         addTearDown(controller.dispose);
 
         await tester.pumpWidget(
@@ -287,8 +295,10 @@ void main() {
 
   group('Marusa Preset & Secret Improv Oracle', () {
     test('loads Marusa progression and reveals improv scales only when secret-primed and saved', () async {
-      final ExplorerController normalCtrl =
-          ExplorerController(loadPersistedPresets: false);
+      final ExplorerController normalCtrl = ExplorerController(
+        loadPersistedPresets: false,
+        enableAudio: false,
+      );
       addTearDown(normalCtrl.dispose);
 
       normalCtrl.loadPresetProgression('Marusa (Just the Two of Us)');
@@ -302,8 +312,10 @@ void main() {
       await normalCtrl.saveUserPreset('Normal Save', persist: false);
       expect(normalCtrl.isSecretImprovRevealed, isFalse);
 
-      final ExplorerController secretCtrl =
-          ExplorerController(loadPersistedPresets: false);
+      final ExplorerController secretCtrl = ExplorerController(
+        loadPersistedPresets: false,
+        enableAudio: false,
+      );
       addTearDown(secretCtrl.dispose);
 
       secretCtrl.loadPresetProgression('Marusa (Just the Two of Us)');

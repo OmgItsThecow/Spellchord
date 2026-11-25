@@ -26,7 +26,11 @@ enum VisualizerMode {
 /// Central reactive state controller driving harmonic analysis, MIDI voice
 /// leading, modal interchange suggestions, and piano/guitar visualizers.
 class ExplorerController extends ChangeNotifier {
-  ExplorerController({bool loadPersistedPresets = true}) {
+  ExplorerController({
+    bool loadPersistedPresets = true,
+    bool enableAudio = true,
+  })  : _enableAudio = enableAudio,
+        _audioPlayer = enableAudio ? ChordAudioPlayer() : null {
     _progression = _buildPreset('ii-V-I + Sec Dom');
     _activePresetName = 'ii-V-I + Sec Dom';
     _recompute();
@@ -81,7 +85,8 @@ class ExplorerController extends ChangeNotifier {
       List<bool>.from(GuitarStringMaskPreset.allSix.mask);
   List<GuitarVoicing> _guitarVoicings = <GuitarVoicing>[];
 
-  final ChordAudioPlayer _audioPlayer = ChordAudioPlayer();
+  final bool _enableAudio;
+  final ChordAudioPlayer? _audioPlayer;
   bool _soundEnabled = true;
   bool _isPlayingProgression = false;
   Timer? _progressionTimer;
@@ -111,22 +116,31 @@ class ExplorerController extends ChangeNotifier {
   void dispose() {
     _progressionTimer?.cancel();
     _progressionTimer = null;
-    _audioPlayer.dispose();
+    _audioPlayer?.dispose();
     super.dispose();
+  }
+
+  void _stopAudio() {
+    final ChordAudioPlayer? audioPlayer = _audioPlayer;
+    if (!_enableAudio || audioPlayer == null) {
+      return;
+    }
+    unawaited(audioPlayer.stop());
   }
 
   void toggleSound() {
     _soundEnabled = !_soundEnabled;
     if (!_soundEnabled) {
       stopProgressionPlayback();
-      unawaited(_audioPlayer.stop());
+      _stopAudio();
     }
     _activeHelpMessage = strings.soundToggleFeedback(_soundEnabled);
     notifyListeners();
   }
 
   void playSelectedChord({bool force = false}) {
-    if (!_soundEnabled && !force) {
+    final ChordAudioPlayer? audioPlayer = _audioPlayer;
+    if (!_enableAudio || audioPlayer == null || (!_soundEnabled && !force)) {
       return;
     }
     final bool isGuitar = _visualizerMode == VisualizerMode.guitar;
@@ -139,7 +153,7 @@ class ExplorerController extends ChangeNotifier {
       return;
     }
     unawaited(
-      _audioPlayer.playChord(
+      audioPlayer.playChord(
         midiNotes: notes,
         instrument:
             isGuitar ? SynthInstrument.guitar : SynthInstrument.piano,
@@ -159,7 +173,7 @@ class ExplorerController extends ChangeNotifier {
   void togglePlayProgression() {
     if (_isPlayingProgression) {
       stopProgressionPlayback();
-      unawaited(_audioPlayer.stop());
+      _stopAudio();
       return;
     }
     if (_progression.isEmpty) {

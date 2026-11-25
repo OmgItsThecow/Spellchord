@@ -54,8 +54,10 @@ void main() {
 
   group('ExplorerController Audio Controls', () {
     test('toggles sound and triggers playback safely in headless tests', () {
-      final ExplorerController controller =
-          ExplorerController(loadPersistedPresets: false);
+      final ExplorerController controller = ExplorerController(
+        loadPersistedPresets: false,
+        enableAudio: false,
+      );
       addTearDown(controller.dispose);
 
       expect(controller.soundEnabled, isTrue);
@@ -63,6 +65,11 @@ void main() {
 
       controller.setVisualizerMode(VisualizerMode.guitar);
       controller.playSelectedChord();
+
+      controller.togglePlayProgression();
+      expect(controller.isPlayingProgression, isTrue);
+      controller.togglePlayProgression();
+      expect(controller.isPlayingProgression, isFalse);
 
       controller.toggleSound();
       expect(controller.soundEnabled, isFalse);
