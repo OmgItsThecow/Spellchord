@@ -118,8 +118,8 @@ class AppStrings {
             : 'Royal Road J-Pop (Fmaj7–G7–Em7–Am7)';
       case 'Marusa (Just the Two of Us)':
         return isEs
-            ? 'Progresión Marusa / Just the Two of Us (Fmaj7–E7–Am7–Gm7–C7)'
-            : 'Marusa / Just the Two of Us (Fmaj7–E7–Am7–Gm7–C7)';
+            ? 'Progresión Marusa / Just the Two of Us (Fmaj7–Em7–Am7–Gm7–C7)'
+            : 'Marusa / Just the Two of Us (Fmaj7–Em7–Am7–Gm7–C7)';
       case 'Bossa Nova Turnaround':
         return isEs
             ? 'Bossa Nova (Fmaj7–G9–Gm7–C13)'

@@ -959,7 +959,7 @@ class ExplorerController extends ChangeNotifier {
       case 'Marusa (Just the Two of Us)':
         return <ChordSpec>[
           ChordSpec.major7(5, id: 'mar_1'), // Fmaj7 (IVΔ7)
-          ChordSpec.dominant7(4, id: 'mar_2'), // E7 (III7 / V7/vi)
+          ChordSpec.minor7(4, id: 'mar_2'), // Em7 (iii7)
           ChordSpec.minor7(9, id: 'mar_3'), // Am7 (vi7)
           ChordSpec.minor7(7, id: 'mar_4'), // Gm7 (v7)
           ChordSpec.dominant7(0, id: 'mar_5'), // C7 (I7 -> IV)

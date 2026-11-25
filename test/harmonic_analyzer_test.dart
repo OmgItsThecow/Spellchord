@@ -305,7 +305,7 @@ void main() {
       expect(normalCtrl.progression.length, 5);
       expect(
         normalCtrl.progression.map((ChordSpec c) => c.symbol()).toList(),
-        const <String>['Fmaj7', 'E7', 'Am7', 'Gm7', 'C7'],
+        const <String>['Fmaj7', 'Em7', 'Am7', 'Gm7', 'C7'],
       );
 
       normalCtrl.dismissCredits();

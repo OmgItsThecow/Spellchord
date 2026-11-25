@@ -115,11 +115,11 @@ class ImprovisationScaleEngine {
   }
 
   /// Detects if [progression] contains the Marusa ("Just the Two of Us") shape:
-  /// IVΔ7 -> III7 -> vi7 -> (v7 -> I7) in some Major key center.
+  /// IVΔ7 -> iii7/III7 -> vi7 -> (v7 -> I7) in some Major key center.
   static int? _detectMarusaParentMajorPc(List<ChordSpec> progression) {
     for (int p = 0; p < 12; p++) {
       bool hasIvMaj = false;
-      bool hasIiiDom = false;
+      bool hasIii = false;
       bool hasViMin = false;
       bool hasVMinOrITurn = false;
 
@@ -133,8 +133,8 @@ class ImprovisationScaleEngine {
 
         if (rel == 5 && isMajLike) {
           hasIvMaj = true;
-        } else if (rel == 4 && isDom7) {
-          hasIiiDom = true;
+        } else if (rel == 4 && (isMinLike || isDom7)) {
+          hasIii = true;
         } else if (rel == 9 && isMinLike) {
           hasViMin = true;
         } else if ((rel == 7 && isMinLike) || (rel == 0 && isDom7)) {
@@ -142,7 +142,7 @@ class ImprovisationScaleEngine {
         }
       }
 
-      if (hasIvMaj && hasIiiDom && hasViMin && hasVMinOrITurn) {
+      if (hasIvMaj && hasIii && hasViMin && hasVMinOrITurn) {
         return p;
       }
     }
@@ -382,6 +382,26 @@ class ImprovisationScaleEngine {
           aestheticExperience: isEs
               ? 'Sobre $chordSymbol, esa 3.ª mayor ajena a la escala abre una tensión magnética de neón y terciopelo: una curva oriental y urbana que pide a gritos resolver en la calma del acorde vi.'
               : 'Over $chordSymbol, that out-of-key major 3rd ignites a velvet-and-neon tension—an intimate, restless curve that pulls the ear straight toward the sanctuary of the vi chord.',
+          isChordSpecific: true,
+        );
+      }
+      if (rel == 4 && chord.triad == TriadQuality.minor) {
+        final List<int> phrygPcs = _transpose(
+          ScaleMode.phrygian.semitoneIntervals,
+          chord.normalizedRootPc,
+        );
+        return ImprovisationScaleRecommendation(
+          title: isEs
+              ? '$chordRoot Frigia (sobre $chordSymbol)'
+              : '$chordRoot Phrygian (over $chordSymbol)',
+          subtitle: isEs
+              ? 'MATIZ DIATÓNICO SOBRE EL iii7'
+              : 'DIATONIC INFLECTION ON iii7',
+          pitchClasses: phrygPcs,
+          noteNamesSummary: _formatPcs(phrygPcs, preferFlat: preferFlat),
+          aestheticExperience: isEs
+              ? 'Sobre $chordSymbol, $chordRoot Frigia permanece dentro de la escala mayor de $parentName, suavizando el paso hacia el acorde vi con un matiz nostálgico, íntimo y sin fricción cromática.'
+              : 'Over $chordSymbol, $chordRoot Phrygian stays smoothly inside the parent $parentName Major scale, softening the step into the vi chord with a wistful, understated glow.',
           isChordSpecific: true,
         );
       }
