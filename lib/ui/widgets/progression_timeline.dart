@@ -361,12 +361,11 @@ class _ChordCard extends StatelessWidget {
 
   Future<void> _showContextMenu(
     BuildContext context,
-    TapDownDetails details,
+    Offset pos,
   ) async {
     onSelect();
     final RenderBox overlay =
         Overlay.of(context).context.findRenderObject()! as RenderBox;
-    final Offset pos = details.globalPosition;
 
     final int domRootPc = (chord.normalizedRootPc + 7) % 12;
     final String domSymbol =
@@ -505,7 +504,7 @@ class _ChordCard extends StatelessWidget {
         onTap: onSelect,
         onDoubleTap: onEdit,
         onSecondaryTapDown: (TapDownDetails details) =>
-            _showContextMenu(context, details),
+            _showContextMenu(context, details.globalPosition),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 140),
           width: isCompact ? 132 : 196,
@@ -522,7 +521,7 @@ class _ChordCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              // Roman numeral & function badge
+              // Roman numeral, function badge, and Android/touch menu button
               Row(
                 children: <Widget>[
                   Container(
@@ -555,6 +554,23 @@ class _ChordCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (isSelected)
+                    Builder(
+                      builder: (BuildContext btnCtx) => _TinyIconButton(
+                        controller: controller,
+                        icon: Icons.more_vert_rounded,
+                        tooltip: strings.ctxMoreOptionsTip,
+                        compact: isCompact,
+                        onTap: () {
+                          final RenderBox box =
+                              btnCtx.findRenderObject()! as RenderBox;
+                          final Offset anchor = box.localToGlobal(
+                            Offset(0, box.size.height),
+                          );
+                          _showContextMenu(btnCtx, anchor);
+                        },
+                      ),
+                    ),
                 ],
               ),
               SizedBox(height: isCompact ? 5 : 8),

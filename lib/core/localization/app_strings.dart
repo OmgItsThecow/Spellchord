@@ -670,4 +670,8 @@ class AppStrings {
   String ctxInsertSecDom(String domSymbol) => isEs
       ? 'Insertar $domSymbol antes (V7)'
       : 'Insert $domSymbol before (V7)';
+
+  String get ctxMoreOptionsTip => isEs
+      ? 'Más opciones del acorde (duplicar, cambiar Mayor/Menor, insertar V7, mover o eliminar).'
+      : 'More chord options (duplicate, flip Major/Minor, insert V7, move, or delete).';
 }
