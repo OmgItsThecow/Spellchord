@@ -325,6 +325,37 @@ void main() {
         const <String>['Cm', 'Gm', 'Ab', 'Fm', 'Fm', 'Cm'],
       );
     });
+
+    test('undo and redo restore progression and key edits cleanly', () {
+      final ExplorerController controller = ExplorerController(
+        loadPersistedPresets: false,
+        enableAudio: false,
+      );
+      addTearDown(controller.dispose);
+
+      expect(controller.canUndo, isFalse);
+      expect(controller.canRedo, isFalse);
+
+      final int initialLen = controller.progression.length;
+      controller.addChord(ChordSpec.major7(0, id: 'undo_c'));
+      expect(controller.progression.length, initialLen + 1);
+      expect(controller.canUndo, isTrue);
+
+      controller.removeChordAt(0);
+      expect(controller.progression.length, initialLen);
+
+      expect(controller.undo(), isTrue);
+      expect(controller.progression.length, initialLen + 1);
+      expect(controller.canRedo, isTrue);
+
+      expect(controller.undo(), isTrue);
+      expect(controller.progression.length, initialLen);
+      expect(controller.activePresetName, 'Dream Pop');
+
+      expect(controller.redo(), isTrue);
+      expect(controller.progression.length, initialLen + 1);
+      expect(controller.progression.last.id, 'undo_c');
+    });
   });
 
   group('Android Layout Overflow Regression', () {

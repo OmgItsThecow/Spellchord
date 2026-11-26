@@ -103,6 +103,10 @@ class ExplorerController extends ChangeNotifier {
   bool _hasCompletedSetup = false;
   ComplexityMode _complexityMode = ComplexityMode.basic;
 
+  static const int _maxHistoryLength = 60;
+  final List<_ProgressionSnapshot> _undoStack = <_ProgressionSnapshot>[];
+  final List<_ProgressionSnapshot> _redoStack = <_ProgressionSnapshot>[];
+
   // --- Read-only Getters ---
 
   bool get soundEnabled => _soundEnabled;
@@ -114,6 +118,68 @@ class ExplorerController extends ChangeNotifier {
   ImprovisationInsightResult? get improvInsight => _improvInsight;
   bool get hasSelectedLanguage => _hasSelectedLanguage;
   bool get hasCompletedSetup => _hasCompletedSetup;
+  bool get canUndo => _undoStack.isNotEmpty;
+  bool get canRedo => _redoStack.isNotEmpty;
+
+  _ProgressionSnapshot _captureSnapshot() {
+    return _ProgressionSnapshot(
+      progression: _progression.map((ChordSpec c) => c.copyWith()).toList(),
+      selectedChordIndex: _selectedChordIndex,
+      activePresetName: _activePresetName,
+      isKeyLocked: _isKeyLocked,
+      lockedKeyTonicPc: _lockedKeyTonicPc,
+      lockedKeyMode: _lockedKeyMode,
+    );
+  }
+
+  void _pushUndoSnapshot() {
+    _undoStack.add(_captureSnapshot());
+    if (_undoStack.length > _maxHistoryLength) {
+      _undoStack.removeAt(0);
+    }
+    _redoStack.clear();
+  }
+
+  void _restoreSnapshot(_ProgressionSnapshot snapshot) {
+    stopProgressionPlayback();
+    _progression =
+        snapshot.progression.map((ChordSpec c) => c.copyWith()).toList();
+    _selectedChordIndex = snapshot.selectedChordIndex.clamp(
+      0,
+      _progression.isEmpty ? 0 : _progression.length - 1,
+    );
+    _activePresetName = snapshot.activePresetName;
+    _isKeyLocked = snapshot.isKeyLocked;
+    _lockedKeyTonicPc = snapshot.lockedKeyTonicPc;
+    _lockedKeyMode = snapshot.lockedKeyMode;
+    _recompute();
+  }
+
+  /// Reverts the most recent progression or key edit (Windows/Linux Ctrl+Z).
+  bool undo() {
+    if (_undoStack.isEmpty) {
+      return false;
+    }
+    _redoStack.add(_captureSnapshot());
+    final _ProgressionSnapshot previous = _undoStack.removeLast();
+    _restoreSnapshot(previous);
+    _activeHelpMessage = strings.undoFeedback;
+    notifyListeners();
+    return true;
+  }
+
+  /// Re-applies the most recently undone edit (Windows/Linux Ctrl+Y).
+  bool redo() {
+    if (_redoStack.isEmpty) {
+      return false;
+    }
+    _undoStack.add(_captureSnapshot());
+    final _ProgressionSnapshot next = _redoStack.removeLast();
+    _restoreSnapshot(next);
+    _activeHelpMessage = strings.redoFeedback;
+    notifyListeners();
+    return true;
+  }
 
   @override
   void dispose() {
@@ -430,6 +496,7 @@ class ExplorerController extends ChangeNotifier {
 
   void addChord(ChordSpec chord) {
     stopProgressionPlayback();
+    _pushUndoSnapshot();
     _progression.add(chord);
     _activePresetName = null;
     _selectedChordIndex = _progression.length - 1;
@@ -443,6 +510,7 @@ class ExplorerController extends ChangeNotifier {
       return;
     }
     stopProgressionPlayback();
+    _pushUndoSnapshot();
     _progression[index] = updated;
     _activePresetName = null;
     _selectedChordIndex = index;
@@ -455,6 +523,7 @@ class ExplorerController extends ChangeNotifier {
     if (_progression.length <= 1 || index < 0 || index >= _progression.length) {
       return;
     }
+    _pushUndoSnapshot();
     _progression.removeAt(index);
     _activePresetName = null;
     if (_selectedChordIndex >= _progression.length) {
@@ -472,6 +541,7 @@ class ExplorerController extends ChangeNotifier {
         oldIndex == newIndex) {
       return;
     }
+    _pushUndoSnapshot();
     final ChordSpec item = _progression.removeAt(oldIndex);
     _progression.insert(newIndex, item);
     _activePresetName = null;
@@ -481,6 +551,7 @@ class ExplorerController extends ChangeNotifier {
   }
 
   void loadPresetProgression(String presetName) {
+    _pushUndoSnapshot();
     final List<ChordSpec>? custom = _userPresets[presetName];
     if (custom != null) {
       _progression = custom.map((ChordSpec c) => c.copyWith()).toList();
@@ -538,6 +609,7 @@ class ExplorerController extends ChangeNotifier {
     if (chordIndex < 0 || chordIndex >= _progression.length) {
       return;
     }
+    _pushUndoSnapshot();
     final ChordSpec current = _progression[chordIndex];
     _progression[chordIndex] = inversionIndex == null
         ? current.copyWith(clearManualInversion: true, voicingVariantIndex: 0)
@@ -573,6 +645,7 @@ class ExplorerController extends ChangeNotifier {
     if (chordIndex < 0 || chordIndex >= _progression.length) {
       return;
     }
+    _pushUndoSnapshot();
     final ChordSpec current = _progression[chordIndex];
     final int totalAvailable = _allRankedForSelected.isEmpty
         ? 1
@@ -587,6 +660,7 @@ class ExplorerController extends ChangeNotifier {
   }
 
   void resetAllInversionsToOptimal() {
+    _pushUndoSnapshot();
     for (int i = 0; i < _progression.length; i++) {
       _progression[i] = _progression[i].copyWith(
         clearManualInversion: true,
@@ -617,6 +691,7 @@ class ExplorerController extends ChangeNotifier {
     final int newTonic = MidiPitch.pitchClass(tonicPc);
 
     if (newTonic != oldTonic || mode != oldMode) {
+      _pushUndoSnapshot();
       _progression = _transposeAndAdaptProgression(
         progression: _progression,
         oldTonicPc: oldTonic,
@@ -794,6 +869,7 @@ class ExplorerController extends ChangeNotifier {
       return;
     }
     stopProgressionPlayback();
+    _pushUndoSnapshot();
     final ChordSpec old = _progression[_selectedChordIndex];
     _progression[_selectedChordIndex] = suggestion.chord.copyWith(
       id: old.id,
@@ -1070,4 +1146,22 @@ class ExplorerController extends ChangeNotifier {
         ];
     }
   }
+}
+
+class _ProgressionSnapshot {
+  const _ProgressionSnapshot({
+    required this.progression,
+    required this.selectedChordIndex,
+    required this.activePresetName,
+    required this.isKeyLocked,
+    required this.lockedKeyTonicPc,
+    required this.lockedKeyMode,
+  });
+
+  final List<ChordSpec> progression;
+  final int selectedChordIndex;
+  final String? activePresetName;
+  final bool isKeyLocked;
+  final int lockedKeyTonicPc;
+  final ScaleMode lockedKeyMode;
 }

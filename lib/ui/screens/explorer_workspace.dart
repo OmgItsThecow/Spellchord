@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 // ignore: deprecated_member_use
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../state/explorer_controller.dart';
 import '../theme/dark_theme.dart';
@@ -33,6 +35,11 @@ class _ExplorerWorkspaceState extends State<ExplorerWorkspace> {
   int _narrowPanelTab = 0; // 0 = Voice Leading, 1 = Modal Interchange, 2 = Secret Improv
   bool _wasSecretRevealed = false;
 
+  bool get _isWindowsOrLinux =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.windows ||
+          defaultTargetPlatform == TargetPlatform.linux);
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -60,7 +67,26 @@ class _ExplorerWorkspaceState extends State<ExplorerWorkspace> {
             controller: widget.controller,
           );
         } else {
-          activeScreen = _buildMainWorkspace();
+          final Widget workspace = _buildMainWorkspace();
+          activeScreen = _isWindowsOrLinux
+              ? CallbackShortcuts(
+                  key: const ValueKey<String>('main_workspace'),
+                  bindings: <ShortcutActivator, VoidCallback>{
+                    const SingleActivator(
+                      LogicalKeyboardKey.keyZ,
+                      control: true,
+                    ): () => widget.controller.undo(),
+                    const SingleActivator(
+                      LogicalKeyboardKey.keyY,
+                      control: true,
+                    ): () => widget.controller.redo(),
+                  },
+                  child: Focus(
+                    autofocus: true,
+                    child: workspace,
+                  ),
+                )
+              : workspace;
         }
 
         return ColoredBox(
@@ -96,7 +122,7 @@ class _ExplorerWorkspaceState extends State<ExplorerWorkspace> {
     final bool showSecret = widget.controller.isSecretImprovRevealed;
 
     return Scaffold(
-      key: const ValueKey<String>('main_workspace'),
+      key: _isWindowsOrLinux ? null : const ValueKey<String>('main_workspace'),
       backgroundColor: AppDarkTheme.bgPrimary,
       body: SafeArea(
             child: LayoutBuilder(

@@ -644,4 +644,12 @@ class AppStrings {
   String get basicQuickSwapsEmpty => isEs
       ? 'Toca cualquier acorde arriba para ver variaciones rápidas.'
       : 'Tap any chord above to see quick variations.';
+
+  String get undoFeedback => isEs
+      ? 'Último cambio deshecho (Ctrl+Z).'
+      : 'Undid last change (Ctrl+Z).';
+
+  String get redoFeedback => isEs
+      ? 'Cambio rehecho (Ctrl+Y).'
+      : 'Redid change (Ctrl+Y).';
 }
