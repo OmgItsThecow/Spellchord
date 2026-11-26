@@ -47,25 +47,30 @@ class ChordSynthesizer {
   }
 
   static Float64List _synthesizePiano(List<int> notes) {
-    const double durationSec = 1.35;
+    const double durationSec = 2.15;
     final int totalSamples = (sampleRate * durationSec).round();
-    final Float64List mix = Float64List(totalSamples);
+    final Float64List dryMix = Float64List(totalSamples);
 
-    // Harmonic amplitudes for a warm electric/acoustic piano tone.
-    const List<double> harmonics = <double>[1.0, 0.44, 0.22, 0.11, 0.05, 0.02];
-    const int attackSamples = 176; // ~8 ms
-    const int tailFadeSamples = 882; // ~40 ms
+    // Warm felt / vintage electric piano harmonic profile.
+    const List<double> harmonics = <double>[1.0, 0.36, 0.16, 0.07, 0.03];
+    const int attackSamples = 264; // ~12 ms soft felt hammer attack
+    const double rollStepSec = 0.009; // Natural 9 ms finger roll across chord
+    const int tailFadeSamples = 2205; // ~100 ms smooth fade-out
+    final int lastIdx = math.max(1, notes.length - 1);
 
     for (int nIdx = 0; nIdx < notes.length; nIdx++) {
       final int midi = notes[nIdx];
       final double freq = midiToFrequency(midi);
-      final int startSample = (nIdx * 0.004 * sampleRate).round();
-      final double baseDecay = 2.2 + (midi - 48).clamp(0, 48) * 0.032;
+      final int startSample = (nIdx * rollStepSec * sampleRate).round();
+      final double baseDecay = 1.55 + (midi - 48).clamp(0, 48) * 0.025;
+      // Gently tame uppermost notes so chords stay velvety and balanced.
+      final double voiceGain = 1.0 - 0.10 * (nIdx / lastIdx);
 
       for (int i = startSample; i < totalSamples; i++) {
-        final double t = (i - startSample) / sampleRate;
-        final double attack = i - startSample < attackSamples
-            ? (i - startSample) / attackSamples
+        final int dt = i - startSample;
+        final double t = dt / sampleRate;
+        final double attack = dt < attackSamples
+            ? 0.5 * (1.0 - math.cos(math.pi * dt / attackSamples))
             : 1.0;
 
         double sample = 0.0;
@@ -74,18 +79,160 @@ class ChordSynthesizer {
           if (hFreq >= sampleRate * 0.45) {
             break;
           }
-          final double hDecay = math.exp(-t * (baseDecay + h * 1.15));
+          final double hDecay = baseDecay + h * 1.35;
           sample += harmonics[h] *
-              hDecay *
+              math.exp(-t * hDecay) *
               math.sin(2.0 * math.pi * hFreq * t);
         }
 
-        mix[i] += sample * attack;
+        dryMix[i] += sample * attack * voiceGain;
       }
     }
 
-    _normalizeAndFadeTail(mix, tailFadeSamples);
-    return mix;
+    final Float64List wetMix = _applyLoFiDreamPopPianoFx(dryMix);
+    _normalizeAndFadeTail(wetMix, tailFadeSamples);
+    return wetMix;
+  }
+
+  /// Dream-pop / lo-fi tape pedalboard chain for piano:
+  /// 1. Warm tape saturation + 65 Hz HPF + 1.95 kHz vintage low-pass filter
+  /// 2. Analog tape wow & flutter (gentle nostalgic pitch drift) + warm chorus
+  /// 3. Dark velvety plate/room reverb + silky post-FX tone smoothing
+  static Float64List _applyLoFiDreamPopPianoFx(Float64List input) {
+    final int n = input.length;
+    if (n == 0) {
+      return input;
+    }
+
+    double dryPeak = 0.0;
+    for (int i = 0; i < n; i++) {
+      final double a = input[i].abs();
+      if (a > dryPeak) {
+        dryPeak = a;
+      }
+    }
+    final double dryScale = dryPeak > 1e-6 ? 0.85 / dryPeak : 1.0;
+
+    // --- 1. Warm tape saturation + HPF (65 Hz) + Vintage LPF (1.95 kHz) ---
+    final Float64List filtered = Float64List(n);
+    const double dt = 1.0 / sampleRate;
+    const double hpRc = 1.0 / (2.0 * math.pi * 65.0);
+    const double hpAlpha = hpRc / (hpRc + dt);
+    double hpPrevIn = 0.0;
+    double hpPrevOut = 0.0;
+
+    const double w0 = 2.0 * math.pi * 1950.0 / sampleRate;
+    final double cosW0 = math.cos(w0);
+    final double sinW0 = math.sin(w0);
+    final double alpha = sinW0 / (2.0 * 0.68);
+    final double b0 = ((1.0 - cosW0) * 0.5) / (1.0 + alpha);
+    final double b1 = (1.0 - cosW0) / (1.0 + alpha);
+    final double b2 = b0;
+    final double a1 = (-2.0 * cosW0) / (1.0 + alpha);
+    final double a2 = (1.0 - alpha) / (1.0 + alpha);
+    double x1 = 0.0, x2 = 0.0, y1 = 0.0, y2 = 0.0;
+
+    final double tanhNorm = _tanh(1.18);
+    for (int i = 0; i < n; i++) {
+      final double driven = _tanh(input[i] * dryScale * 1.18) / tanhNorm;
+      final double hp = hpAlpha * (hpPrevOut + driven - hpPrevIn);
+      hpPrevIn = driven;
+      hpPrevOut = hp;
+
+      final double lp = b0 * hp + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2;
+      x2 = x1;
+      x1 = hp;
+      y2 = y1;
+      y1 = lp;
+      filtered[i] = lp;
+    }
+
+    // --- 2. Analog Tape Wow & Flutter + Warm Dream-Pop Chorus ---
+    final Float64List modulated = Float64List(n);
+    const int modBufLen = 1024;
+    final Float64List tapeBuf = Float64List(modBufLen);
+    int modWrite = 0;
+
+    // Gentle cassette wow (0.42 Hz) + subtle flutter (3.1 Hz)
+    const double tapeBase = 0.0040 * sampleRate; // 4.0 ms
+    const double wowDepth = 0.00105 * sampleRate; // ±1.05 ms
+    const double flutterDepth = 0.00012 * sampleRate; // ±0.12 ms
+    const double wowRate = 2.0 * math.pi * 0.42 / sampleRate;
+    const double flutterRate = 2.0 * math.pi * 3.1 / sampleRate;
+
+    // Lush slow chorus tap
+    const double chorusBase = 0.0125 * sampleRate; // 12.5 ms
+    const double chorusDepth = 0.0028 * sampleRate; // ±2.8 ms
+    const double chorusRate = 2.0 * math.pi * 0.48 / sampleRate;
+
+    for (int i = 0; i < n; i++) {
+      tapeBuf[modWrite] = filtered[i];
+
+      final double tapeDelay = tapeBase +
+          wowDepth * math.sin(i * wowRate + 0.3) +
+          flutterDepth * math.sin(i * flutterRate);
+      final double tapeSig =
+          _readCircularLinear(tapeBuf, modWrite - tapeDelay, modBufLen);
+
+      final double cDelay =
+          chorusBase + chorusDepth * math.sin(i * chorusRate + 1.5);
+      final double cSig =
+          _readCircularLinear(tapeBuf, modWrite - cDelay, modBufLen);
+
+      modulated[i] = tapeSig * 0.78 + cSig * 0.24;
+      modWrite = (modWrite + 1) % modBufLen;
+    }
+
+    // --- 3. Dark Velvety Plate/Room Reverb + Silky Post-LPF ---
+    const List<int> combDelays = <int>[641, 797, 887, 953];
+    const double combFeedback = 0.78;
+    const double combDamp = 0.56;
+    final List<Float64List> combBufs =
+        combDelays.map((int len) => Float64List(len)).toList(growable: false);
+    final List<int> combIdx = List<int>.filled(combDelays.length, 0);
+    final Float64List combLp = Float64List(combDelays.length);
+
+    const List<int> apDelays = <int>[107, 37];
+    const double apGain = 0.5;
+    final List<Float64List> apBufs =
+        apDelays.map((int len) => Float64List(len)).toList(growable: false);
+    final List<int> apIdx = List<int>.filled(apDelays.length, 0);
+
+    const double postRc = 1.0 / (2.0 * math.pi * 2400.0);
+    const double postAlpha = dt / (postRc + dt);
+    double postLp = 0.0;
+
+    final Float64List output = Float64List(n);
+    for (int i = 0; i < n; i++) {
+      final double x = modulated[i];
+      double combSum = 0.0;
+      for (int c = 0; c < combDelays.length; c++) {
+        final Float64List buf = combBufs[c];
+        final int idx = combIdx[c];
+        final double y = buf[idx];
+        combLp[c] = y * (1.0 - combDamp) + combLp[c] * combDamp;
+        buf[idx] = x + combLp[c] * combFeedback;
+        combIdx[c] = (idx + 1) % combDelays[c];
+        combSum += y;
+      }
+
+      double rev = combSum * 0.25;
+      for (int a = 0; a < apDelays.length; a++) {
+        final Float64List buf = apBufs[a];
+        final int idx = apIdx[a];
+        final double delayed = buf[idx];
+        final double v = rev + delayed * apGain;
+        buf[idx] = v;
+        rev = delayed - v * apGain;
+        apIdx[a] = (idx + 1) % apDelays[a];
+      }
+
+      final double wet = x * 0.70 + rev * 0.34;
+      postLp += postAlpha * (wet - postLp);
+      output[i] = postLp;
+    }
+
+    return output;
   }
 
   /// Renders a dream-pop electric guitar chord (Men I Trust inspired):
