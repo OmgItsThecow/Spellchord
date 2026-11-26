@@ -1,5 +1,6 @@
 #include <flutter/dart_project.h>
 #include <flutter/flutter_view_controller.h>
+#include <ole2.h>
 #include <windows.h>
 
 #include "flutter_window.h"
@@ -13,9 +14,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
     CreateAndAttachConsole();
   }
 
-  // Initialize COM, so that it is available for use in the library and/or
-  // plugins.
-  ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+  // Initialize OLE (STA COM + drag-and-drop), required for DoDragDrop.
+  ::OleInitialize(nullptr);
 
   flutter::DartProject project(L"data");
 
@@ -28,6 +28,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1600, 960);
   if (!window.Create(L"Spellchord - Harmonic & Modal Explorer", origin, size)) {
+    ::OleUninitialize();
     return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);
@@ -38,6 +39,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
     ::DispatchMessage(&msg);
   }
 
-  ::CoUninitialize();
+  ::OleUninitialize();
   return EXIT_SUCCESS;
 }

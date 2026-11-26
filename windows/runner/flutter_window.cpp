@@ -1,8 +1,12 @@
 #include "flutter_window.h"
 
+#include <flutter/standard_method_codec.h>
+
 #include <optional>
+#include <string>
 
 #include "flutter/generated_plugin_registrant.h"
+#include "midi_file_drag.h"
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -25,6 +29,35 @@ bool FlutterWindow::OnCreate() {
     return false;
   }
   RegisterPlugins(flutter_controller_->engine());
+
+  drag_channel_ =
+      std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
+          flutter_controller_->engine()->messenger(),
+          "spellchord/windows_drag",
+          &flutter::StandardMethodCodec::GetInstance());
+  drag_channel_->SetMethodCallHandler(
+      [](const flutter::MethodCall<flutter::EncodableValue>& call,
+         std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>>
+             result) {
+        if (call.method_name() == "startFileDrag") {
+          const auto* args =
+              std::get_if<flutter::EncodableMap>(call.arguments());
+          if (args) {
+            auto it = args->find(flutter::EncodableValue("path"));
+            if (it != args->end()) {
+              if (const auto* path = std::get_if<std::string>(&it->second)) {
+                const bool dropped = StartWindowsFileDrag(*path);
+                result->Success(flutter::EncodableValue(dropped));
+                return;
+              }
+            }
+          }
+          result->Success(flutter::EncodableValue(false));
+          return;
+        }
+        result->NotImplemented();
+      });
+
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
@@ -40,6 +73,7 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  drag_channel_ = nullptr;
   if (flutter_controller_) {
     flutter_controller_ = nullptr;
   }

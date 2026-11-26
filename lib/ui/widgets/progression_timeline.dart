@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 // ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 
+import '../../core/audio/windows_midi_drag.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/models/chord_spec.dart';
 import '../../core/models/chord_voicing.dart';
@@ -193,6 +194,68 @@ class _ProgressionTimelineState extends State<ProgressionTimeline> {
                       },
                     ),
                   ),
+                  if (WindowsMidiDrag.isSupported)
+                    ExplainedControl(
+                      controller: controller,
+                      explanation: strings.dragProgressionMidiTip,
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.grab,
+                        child: GestureDetector(
+                          onPanStart: (_) {
+                            final String preset =
+                                controller.activePresetName ?? 'Progression';
+                            WindowsMidiDrag.startDrag(
+                              chordMidiNotes: controller.allActiveVoicingNotes(),
+                              suggestedName: 'Spellchord_$preset',
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppDarkTheme.accentFor(
+                                isPiano: controller.visualizerMode ==
+                                    VisualizerMode.piano,
+                              ).withValues(alpha: 0.14),
+                              borderRadius: BorderRadius.circular(7),
+                              border: Border.all(
+                                color: AppDarkTheme.accentFor(
+                                  isPiano: controller.visualizerMode ==
+                                      VisualizerMode.piano,
+                                ).withValues(alpha: 0.45),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                Icon(
+                                  Icons.drag_indicator_rounded,
+                                  size: 14,
+                                  color: AppDarkTheme.accentFor(
+                                    isPiano: controller.visualizerMode ==
+                                        VisualizerMode.piano,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  strings.dragProgressionMidiLabel,
+                                  style: TextStyle(
+                                    color: AppDarkTheme.accentFor(
+                                      isPiano: controller.visualizerMode ==
+                                          VisualizerMode.piano,
+                                    ),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ],
@@ -554,6 +617,34 @@ class _ChordCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (WindowsMidiDrag.isSupported)
+                    ExplainedControl(
+                      controller: controller,
+                      explanation: strings.dragChordMidiTip,
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.grab,
+                        child: GestureDetector(
+                          onPanStart: (_) {
+                            final List<int> notes =
+                                controller.activeVoicingNotesAt(index);
+                            if (notes.isNotEmpty) {
+                              WindowsMidiDrag.startDrag(
+                                chordMidiNotes: <List<int>>[notes],
+                                suggestedName: 'Spellchord_$displaySymbol',
+                              );
+                            }
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            child: Icon(
+                              Icons.drag_indicator_rounded,
+                              size: isCompact ? 14 : 15,
+                              color: AppDarkTheme.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   if (isSelected)
                     Builder(
                       builder: (BuildContext btnCtx) => _TinyIconButton(

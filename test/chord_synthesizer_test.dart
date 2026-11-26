@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:harmonic_explorer/core/audio/chord_synthesizer.dart';
 import 'package:harmonic_explorer/core/audio/guitar_sample_bank.dart';
+import 'package:harmonic_explorer/core/audio/midi_exporter.dart';
 import 'package:harmonic_explorer/state/explorer_controller.dart';
 
 void main() {
@@ -99,6 +100,35 @@ void main() {
       expect(wav.length, greaterThan(44 + 40000 * 2));
       expect(String.fromCharCodes(wav.sublist(0, 4)), 'RIFF');
       expect(String.fromCharCodes(wav.sublist(8, 12)), 'WAVE');
+    });
+
+    test('MidiExporter encodes valid SMF Type 0 MIDI bytes and writes temp .mid file', () {
+      final Uint8List midi = MidiExporter.encodeMidiBytes(
+        chordMidiNotes: const <List<int>>[
+          <int>[50, 57, 61, 66], // Dmaj7
+          <int>[43, 50, 54, 59], // Gmaj7
+        ],
+        trackName: 'Dream Pop',
+      );
+
+      // Verify SMF header 'MThd' and track chunk 'MTrk'
+      expect(String.fromCharCodes(midi.sublist(0, 4)), 'MThd');
+      expect(String.fromCharCodes(midi.sublist(14, 18)), 'MTrk');
+      // Verify End-of-Track meta-event FF 2F 00 at tail
+      expect(midi.sublist(midi.length - 3), const <int>[0xFF, 0x2F, 0x00]);
+      // Verify Note On (0x90) and Note Off (0x80) events exist
+      expect(midi, contains(0x90));
+      expect(midi, contains(0x80));
+
+      final File tempFile = MidiExporter.writeTempMidiFile(
+        chordMidiNotes: const <List<int>>[
+          <int>[50, 57, 61, 66],
+        ],
+        suggestedName: 'Spellchord_Dmaj7/A',
+      );
+      expect(tempFile.existsSync(), isTrue);
+      expect(tempFile.path.endsWith('.mid'), isTrue);
+      expect(tempFile.lengthSync(), greaterThan(30));
     });
   });
 

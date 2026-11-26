@@ -230,6 +230,34 @@ class ExplorerController extends ChangeNotifier {
     );
   }
 
+  /// Returns the exact voiced MIDI pitches for chord [index] matching the
+  /// active instrument mode (Guitar voicings in Guitar Mode, Piano otherwise).
+  List<int> activeVoicingNotesAt(int index) {
+    if (index < 0 || index >= _progression.length) {
+      return const <int>[];
+    }
+    final bool isGuitar = _visualizerMode == VisualizerMode.guitar;
+    if (isGuitar && index < _guitarVoicings.length) {
+      final List<int> guitarNotes = _guitarVoicings[index].activeMidiPitches;
+      if (guitarNotes.isNotEmpty) {
+        return guitarNotes;
+      }
+    }
+    if (index < _pianoVoicings.length) {
+      return List<int>.from(_pianoVoicings[index].midiNotes);
+    }
+    return const <int>[];
+  }
+
+  /// Returns the voiced MIDI pitches for every chord in the active progression.
+  List<List<int>> allActiveVoicingNotes() {
+    return List<List<int>>.generate(
+      _progression.length,
+      (int i) => activeVoicingNotesAt(i),
+      growable: false,
+    );
+  }
+
   void stopProgressionPlayback() {
     _progressionTimer?.cancel();
     _progressionTimer = null;

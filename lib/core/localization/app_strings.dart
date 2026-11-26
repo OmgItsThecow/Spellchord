@@ -674,4 +674,17 @@ class AppStrings {
   String get ctxMoreOptionsTip => isEs
       ? 'Más opciones del acorde (duplicar, cambiar Mayor/Menor, insertar V7, mover o eliminar).'
       : 'More chord options (duplicate, flip Major/Minor, insert V7, move, or delete).';
+
+  // --- Windows MIDI Drag-and-Drop ---
+
+  String get dragProgressionMidiLabel =>
+      isEs ? 'Arrastrar MIDI' : 'Drag MIDI';
+
+  String get dragProgressionMidiTip => isEs
+      ? 'Haz clic y arrastra hacia Ableton Live (o cualquier DAW) para soltar toda la progresión como archivo .mid.'
+      : 'Click and drag onto Ableton Live (or any DAW) to drop the full progression as a .mid file.';
+
+  String get dragChordMidiTip => isEs
+      ? 'Haz clic y arrastra hacia Ableton Live (o cualquier DAW) para soltar este acorde como archivo .mid.'
+      : 'Click and drag onto Ableton Live (or any DAW) to drop this chord as a .mid file.';
 }
