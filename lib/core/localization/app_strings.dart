@@ -100,6 +100,10 @@ class AppStrings {
 
   String presetDisplayName(String presetKey) {
     switch (presetKey) {
+      case 'Dream-Pop Nocturne':
+        return isEs
+            ? 'Nocturno Dream-Pop (Gmaj7–F#m7–Em7–Dmaj7)'
+            : 'Dream-Pop Nocturne (Gmaj7–F#m7–Em7–Dmaj7)';
       case 'Pop Anthem + Minor iv':
         return isEs
             ? 'Pop Clásico + iv Menor (C–G–Am–F–Fm)'
