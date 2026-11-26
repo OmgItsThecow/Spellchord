@@ -116,7 +116,10 @@ class KeyCenterBar extends StatelessWidget {
                       child: _ModeSwitchPill(
                         label: strings.advancedModeLabel,
                         selected: !isBasic,
-                        accent: AppDarkTheme.borrowedColor,
+                        accent: controller.visualizerMode ==
+                                VisualizerMode.piano
+                            ? AppDarkTheme.tonicColor
+                            : AppDarkTheme.pelicanPink,
                         onTap: () => controller
                             .setComplexityMode(ComplexityMode.advanced),
                       ),

@@ -108,7 +108,7 @@ class LanguageSelectorScreen extends StatelessWidget {
                             code: 'ES',
                             languageName: 'Español',
                             actionLabel: 'Continuar en Español',
-                            accent: AppDarkTheme.subdominantColor,
+                            accent: AppDarkTheme.pelicanPink,
                             onTap: () =>
                                 controller.selectLanguage(AppLanguage.es),
                           ),

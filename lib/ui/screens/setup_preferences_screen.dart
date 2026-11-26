@@ -134,7 +134,7 @@ class _SetupPreferencesScreenState extends State<SetupPreferencesScreen> {
                               subtitle: strings.setupAdvancedSubtitle,
                               selected:
                                   _selectedMode == ComplexityMode.advanced,
-                              accent: AppDarkTheme.borrowedColor,
+                              accent: AppDarkTheme.pelicanPink,
                               onTap: () => setState(
                                 () => _selectedMode = ComplexityMode.advanced,
                               ),
@@ -172,7 +172,7 @@ class _SetupPreferencesScreenState extends State<SetupPreferencesScreen> {
                               icon: Icons.piano_rounded,
                               selected:
                                   _selectedInstrument == VisualizerMode.piano,
-                              accent: AppDarkTheme.tonicColor,
+                              accent: AppDarkTheme.pelicanPink,
                               onTap: () => setState(
                                 () =>
                                     _selectedInstrument = VisualizerMode.piano,
@@ -187,7 +187,7 @@ class _SetupPreferencesScreenState extends State<SetupPreferencesScreen> {
                               icon: Icons.queue_music_rounded,
                               selected:
                                   _selectedInstrument == VisualizerMode.guitar,
-                              accent: AppDarkTheme.subdominantColor,
+                              accent: AppDarkTheme.tonicColor,
                               onTap: () => setState(
                                 () =>
                                     _selectedInstrument = VisualizerMode.guitar,
@@ -201,7 +201,10 @@ class _SetupPreferencesScreenState extends State<SetupPreferencesScreen> {
 
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppDarkTheme.tonicColor,
+                        backgroundColor: AppDarkTheme.accentFor(
+                          isPiano:
+                              _selectedInstrument == VisualizerMode.piano,
+                        ),
                         foregroundColor: AppDarkTheme.bgPrimary,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 28,
