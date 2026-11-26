@@ -1,10 +1,11 @@
 // ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 
+import '../../core/localization/app_strings.dart';
 import '../../state/explorer_controller.dart';
 import '../theme/dark_theme.dart';
 
-/// Opening startup credits window shown prior to the language selector.
+/// Second startup screen showing localized credits after language selection.
 class CreditsIntroScreen extends StatelessWidget {
   const CreditsIntroScreen({
     super.key,
@@ -15,6 +16,8 @@ class CreditsIntroScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppStrings strings = controller.strings;
+
     return Scaffold(
       backgroundColor: AppDarkTheme.bgPrimary,
       body: SafeArea(
@@ -64,10 +67,10 @@ class CreditsIntroScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 18),
-                    const Text(
-                      'SPELLCHORD',
+                    Text(
+                      strings.appTitle,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: AppDarkTheme.textPrimary,
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
@@ -75,20 +78,20 @@ class CreditsIntroScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Harmonic & Modal Explorer',
+                    Text(
+                      strings.appSubtitle,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: AppDarkTheme.textSecondary,
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     const SizedBox(height: 20),
-                    const Text(
-                      'Created by SniffingWizard and OMGitstheCow in collab with the AI',
+                    Text(
+                      strings.creditsCreatedBy,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: AppDarkTheme.textPrimary,
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -109,9 +112,9 @@ class CreditsIntroScreen extends StatelessWidget {
                         ),
                       ),
                       onPressed: () => controller.dismissCredits(),
-                      child: const Text(
-                        "I don't care",
-                        style: TextStyle(
+                      child: Text(
+                        strings.creditsDismissButton,
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
                         ),
@@ -122,10 +125,10 @@ class CreditsIntroScreen extends StatelessWidget {
                       behavior: HitTestBehavior.opaque,
                       onTap: () =>
                           controller.dismissCredits(secretRockTap: true),
-                      child: const Text(
-                        'Keep rocking the world',
+                      child: Text(
+                        strings.creditsKeepRocking,
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: AppDarkTheme.tonicColor,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,

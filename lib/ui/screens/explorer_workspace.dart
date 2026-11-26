@@ -12,6 +12,7 @@ import '../widgets/secret_improv_panel.dart';
 import '../widgets/voice_leading_panel.dart';
 import 'credits_intro_screen.dart';
 import 'language_selector_screen.dart';
+import 'setup_preferences_screen.dart';
 
 /// Main responsive workspace uniting Key Center controls, Progression Timeline,
 /// Voice Leading & Modal Interchange inspectors, and Piano/Guitar visualizers.
@@ -40,11 +41,14 @@ class _ExplorerWorkspaceState extends State<ExplorerWorkspace> {
           _wasSecretRevealed = true;
           _narrowPanelTab = 2;
         }
+        if (!widget.controller.hasSelectedLanguage) {
+          return LanguageSelectorScreen(controller: widget.controller);
+        }
         if (!widget.controller.hasDismissedCredits) {
           return CreditsIntroScreen(controller: widget.controller);
         }
-        if (!widget.controller.hasSelectedLanguage) {
-          return LanguageSelectorScreen(controller: widget.controller);
+        if (!widget.controller.hasCompletedSetup) {
+          return SetupPreferencesScreen(controller: widget.controller);
         }
 
         return Scaffold(

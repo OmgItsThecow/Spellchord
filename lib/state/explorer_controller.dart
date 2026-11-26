@@ -99,6 +99,7 @@ class ExplorerController extends ChangeNotifier {
   bool _secretRockPrimed = false;
   bool _secretImprovRevealed = false;
   bool _hasSelectedLanguage = false;
+  bool _hasCompletedSetup = false;
   ComplexityMode _complexityMode = ComplexityMode.basic;
 
   // --- Read-only Getters ---
@@ -111,6 +112,7 @@ class ExplorerController extends ChangeNotifier {
   bool get isSecretImprovRevealed => _secretImprovRevealed;
   ImprovisationInsightResult? get improvInsight => _improvInsight;
   bool get hasSelectedLanguage => _hasSelectedLanguage;
+  bool get hasCompletedSetup => _hasCompletedSetup;
 
   @override
   void dispose() {
@@ -242,6 +244,21 @@ class ExplorerController extends ChangeNotifier {
     }
     _hasSelectedLanguage = true;
     _activeHelpMessage = AppStrings(lang).defaultHelpPrompt;
+    _recompute();
+    notifyListeners();
+  }
+
+  void completeInitialSetup({
+    required ComplexityMode complexityMode,
+    required VisualizerMode visualizerMode,
+  }) {
+    _complexityMode = complexityMode;
+    _visualizerMode = visualizerMode;
+    if (_complexityMode == ComplexityMode.basic) {
+      _normalizeBasicState();
+    }
+    _hasCompletedSetup = true;
+    _activeHelpMessage = strings.defaultHelpPrompt;
     _recompute();
     notifyListeners();
   }

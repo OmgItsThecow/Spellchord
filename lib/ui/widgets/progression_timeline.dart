@@ -163,7 +163,7 @@ class ProgressionTimeline extends StatelessWidget {
             builder: (BuildContext context, BoxConstraints constraints) {
               final bool isCompact = constraints.maxWidth < 600;
               return SizedBox(
-                height: isCompact ? 158 : 154,
+                height: isCompact ? (isBasic ? 158 : 172) : 154,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   itemCount: progression.length,

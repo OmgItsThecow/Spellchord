@@ -341,19 +341,25 @@ void main() {
           );
           await tester.pumpAndSettle();
 
-          // 1. Credits Screen -> tap "I don't care"
-          final Finder creditsBtn = find.text("I don't care");
-          await tester.ensureVisible(creditsBtn);
-          await tester.tap(creditsBtn);
-          await tester.pumpAndSettle();
-
-          // 2. Language Selector Screen -> tap English
+          // 1. Language Selector Screen -> tap English
           final Finder englishBtn = find.text('Continue in English');
           await tester.ensureVisible(englishBtn);
           await tester.tap(englishBtn);
           await tester.pumpAndSettle();
 
-          // 3. Basic Mode (Piano + Voice Leading, then Guitar + Modal Interchange)
+          // 2. Credits Screen -> tap "I don't care"
+          final Finder creditsBtn = find.text("I don't care");
+          await tester.ensureVisible(creditsBtn);
+          await tester.tap(creditsBtn);
+          await tester.pumpAndSettle();
+
+          // 3. Setup Preferences Screen -> tap "Start Exploring" (Basic + Piano)
+          final Finder startBtn = find.text('Start Exploring');
+          await tester.ensureVisible(startBtn);
+          await tester.tap(startBtn);
+          await tester.pumpAndSettle();
+
+          // 4. Basic Mode (Piano + Voice Leading, then Guitar + Modal Interchange)
           controller.setVisualizerMode(VisualizerMode.guitar);
           await tester.pumpAndSettle();
           if (viewport.width < 600) {
@@ -365,7 +371,7 @@ void main() {
           await tester.tap(modalTab);
           await tester.pumpAndSettle();
 
-          // 4. Advanced Mode (Guitar + Modal Interchange, then Piano + Voice Leading)
+          // 5. Advanced Mode (Guitar + Modal Interchange, then Piano + Voice Leading)
           controller.setComplexityMode(ComplexityMode.advanced);
           controller.loadPresetProgression('Pop Anthem + Minor iv');
           await tester.pumpAndSettle();
@@ -387,6 +393,68 @@ void main() {
         },
       );
     }
+
+    testWidgets(
+      'Spanish onboarding localizes credits and setup preferences cleanly at 360x640',
+      (WidgetTester tester) async {
+        tester.view.physicalSize = const Size(360, 640);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        final ExplorerController controller = ExplorerController(
+          loadPersistedPresets: false,
+          enableAudio: false,
+        );
+        addTearDown(controller.dispose);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            themeMode: ThemeMode.dark,
+            darkTheme: AppDarkTheme.themeData,
+            theme: AppDarkTheme.themeData,
+            home: ExplorerWorkspace(controller: controller),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // 1. Choose Spanish
+        final Finder spanishBtn = find.text('Continuar en Español');
+        await tester.ensureVisible(spanishBtn);
+        await tester.tap(spanishBtn);
+        await tester.pumpAndSettle();
+
+        // 2. Verify Spanish credits screen and tap secret "Sigue rockeando el mundo"
+        expect(find.text('No me importa'), findsOneWidget);
+        final Finder secretEs = find.text('Sigue rockeando el mundo');
+        expect(secretEs, findsOneWidget);
+        await tester.ensureVisible(secretEs);
+        await tester.tap(secretEs);
+        await tester.pumpAndSettle();
+
+        // 3. Verify Spanish setup screen, select Avanzado + Guitarra, and tap Comenzar
+        final Finder advancedEs = find.text('Avanzado');
+        await tester.ensureVisible(advancedEs);
+        await tester.tap(advancedEs);
+        await tester.pumpAndSettle();
+
+        final Finder guitarEs = find.text('Guitarra');
+        await tester.ensureVisible(guitarEs);
+        await tester.tap(guitarEs);
+        await tester.pumpAndSettle();
+
+        final Finder startEs = find.text('Comenzar');
+        await tester.ensureVisible(startEs);
+        await tester.tap(startEs);
+        await tester.pumpAndSettle();
+
+        expect(controller.language, AppLanguage.es);
+        expect(controller.isSecretRockPrimed, isTrue);
+        expect(controller.complexityMode, ComplexityMode.advanced);
+        expect(controller.visualizerMode, VisualizerMode.guitar);
+        expect(tester.takeException(), isNull);
+      },
+    );
 
     testWidgets(
       'secret Keep rocking the world flow stays hidden until preset save and renders cleanly at 360x640',
@@ -412,14 +480,22 @@ void main() {
         );
         await tester.pumpAndSettle();
 
+        // 1. Language -> English
+        final Finder englishBtn = find.text('Continue in English');
+        await tester.ensureVisible(englishBtn);
+        await tester.tap(englishBtn);
+        await tester.pumpAndSettle();
+
+        // 2. Credits -> secret tap
         final Finder secretLegend = find.text('Keep rocking the world');
         await tester.ensureVisible(secretLegend);
         await tester.tap(secretLegend);
         await tester.pumpAndSettle();
 
-        final Finder englishBtn = find.text('Continue in English');
-        await tester.ensureVisible(englishBtn);
-        await tester.tap(englishBtn);
+        // 3. Setup -> Start Exploring
+        final Finder startBtn = find.text('Start Exploring');
+        await tester.ensureVisible(startBtn);
+        await tester.tap(startBtn);
         await tester.pumpAndSettle();
 
         // Still hidden before saving a preset

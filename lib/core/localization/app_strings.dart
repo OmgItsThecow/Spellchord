@@ -577,4 +577,55 @@ class AppStrings {
   String secretUnlockedBanner(String presetName) => isEs
       ? '¡Secreto desbloqueado al guardar "$presetName"! Se abrió el Oráculo de Improvisación.'
       : 'Secret unlocked by saving "$presetName"! Improvisation Oracle revealed.';
+
+  // --- Startup Onboarding (Credits & Workspace Setup) ---
+
+  String get creditsCreatedBy => isEs
+      ? 'Creado por SniffingWizard y OMGitstheCow en colaboración con la IA'
+      : 'Created by SniffingWizard and OMGitstheCow in collab with the AI';
+
+  String get creditsDismissButton => isEs ? 'No me importa' : "I don't care";
+
+  String get creditsKeepRocking =>
+      isEs ? 'Sigue rockeando el mundo' : 'Keep rocking the world';
+
+  String get setupTitle => isEs
+      ? 'Configura tu espacio de trabajo'
+      : 'Choose your workspace setup';
+
+  String get setupSubtitle => isEs
+      ? 'Elige tu nivel de experiencia y el modo de instrumento'
+      : 'Pick your experience level and instrument mode';
+
+  String get setupLevelHeading =>
+      isEs ? 'Nivel de experiencia' : 'Experience level';
+
+  String get setupBasicSubtitle => isEs
+      ? 'Guiado · Sin números MIDI'
+      : 'Guided · No raw MIDI numbers';
+
+  String get setupAdvancedSubtitle => isEs
+      ? 'MIDI completo y motor de 7 modos'
+      : 'Full MIDI & 7-mode engine';
+
+  String get setupInstrumentHeading =>
+      isEs ? 'Modo de instrumento' : 'Instrument mode';
+
+  String get setupPianoTitle => 'Piano';
+
+  String get setupPianoSubtitle => isEs
+      ? 'Teclado interactivo y enlace de voces'
+      : 'Interactive keyboard & voice leading';
+
+  String get setupGuitarTitle => isEs ? 'Guitarra' : 'Guitar';
+
+  String get setupGuitarSubtitle => isEs
+      ? 'Diapasón, voicings y afinaciones'
+      : 'Fretboard voicings & custom tunings';
+
+  String get setupContinueButton => isEs ? 'Comenzar' : 'Start Exploring';
+
+  String get setupFooterHint => isEs
+      ? 'Puedes cambiar Básico/Avanzado, Piano/Guitarra y EN/ES en cualquier momento en la barra superior.'
+      : 'You can switch Basic/Advanced, Piano/Guitar, and EN/ES anytime in the workspace.';
 }

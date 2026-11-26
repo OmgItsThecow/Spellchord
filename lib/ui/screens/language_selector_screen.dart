@@ -5,22 +5,15 @@ import '../../core/localization/app_strings.dart';
 import '../../state/explorer_controller.dart';
 import '../theme/dark_theme.dart';
 
-/// Pre-application startup screen letting the user choose their interface
-/// language (English or Español) and starting experience level (Basic or Advanced).
-class LanguageSelectorScreen extends StatefulWidget {
+/// First startup screen letting the user choose their interface language
+/// (English or Español) before showing the localized credits and setup screens.
+class LanguageSelectorScreen extends StatelessWidget {
   const LanguageSelectorScreen({
     super.key,
     required this.controller,
   });
 
   final ExplorerController controller;
-
-  @override
-  State<LanguageSelectorScreen> createState() => _LanguageSelectorScreenState();
-}
-
-class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
-  ComplexityMode _selectedMode = ComplexityMode.basic;
 
   @override
   Widget build(BuildContext context) {
@@ -31,9 +24,12 @@ class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 580),
+              constraints: const BoxConstraints(maxWidth: 540),
               child: Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 28,
+                ),
                 decoration: BoxDecoration(
                   color: AppDarkTheme.cardSurface,
                   borderRadius: BorderRadius.circular(18),
@@ -95,60 +91,21 @@ class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
                     const SizedBox(height: 26),
 
                     const Text(
-                      'Select your language & experience level',
+                      'Select your language',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: AppDarkTheme.textPrimary,
-                        fontSize: 16,
+                        fontSize: 16.5,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 4),
                     const Text(
-                      'Elige tu idioma y nivel de experiencia antes de comenzar',
+                      'Elige tu idioma antes de comenzar',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: AppDarkTheme.textSecondary,
                         fontSize: 13.5,
-                      ),
-                    ),
-                    const SizedBox(height: 22),
-
-                    // Starting complexity mode pills
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: AppDarkTheme.bgWorkspace,
-                        borderRadius: BorderRadius.circular(11),
-                        border: Border.all(color: AppDarkTheme.borderSubtle),
-                      ),
-                      child: Row(
-                        children: <Widget>[
-                          Expanded(
-                            child: _ModeChoiceTile(
-                              title: 'Basic / Básico',
-                              subtitle: 'Guided · No raw MIDI numbers',
-                              selected: _selectedMode == ComplexityMode.basic,
-                              accent: AppDarkTheme.tonicColor,
-                              onTap: () => setState(
-                                () => _selectedMode = ComplexityMode.basic,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: _ModeChoiceTile(
-                              title: 'Advanced / Avanzado',
-                              subtitle: 'Full MIDI & 7-mode engine',
-                              selected:
-                                  _selectedMode == ComplexityMode.advanced,
-                              accent: AppDarkTheme.borrowedColor,
-                              onTap: () => setState(
-                                () => _selectedMode = ComplexityMode.advanced,
-                              ),
-                            ),
-                          ),
-                        ],
                       ),
                     ),
                     const SizedBox(height: 22),
@@ -162,10 +119,8 @@ class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
                             languageName: 'English',
                             actionLabel: 'Continue in English',
                             accent: AppDarkTheme.tonicColor,
-                            onTap: () => widget.controller.selectLanguage(
-                              AppLanguage.en,
-                              initialMode: _selectedMode,
-                            ),
+                            onTap: () =>
+                                controller.selectLanguage(AppLanguage.en),
                           ),
                         ),
                         const SizedBox(width: 14),
@@ -175,10 +130,8 @@ class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
                             languageName: 'Español',
                             actionLabel: 'Continuar en Español',
                             accent: AppDarkTheme.subdominantColor,
-                            onTap: () => widget.controller.selectLanguage(
-                              AppLanguage.es,
-                              initialMode: _selectedMode,
-                            ),
+                            onTap: () =>
+                                controller.selectLanguage(AppLanguage.es),
                           ),
                         ),
                       ],
@@ -186,7 +139,7 @@ class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
                     const SizedBox(height: 16),
 
                     const Text(
-                      'You can switch between Basic/Advanced and EN/ES anytime in the top bar.',
+                      'You can switch between EN / ES anytime in the top bar.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: AppDarkTheme.textMuted,
@@ -198,63 +151,6 @@ class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ModeChoiceTile extends StatelessWidget {
-  const _ModeChoiceTile({
-    required this.title,
-    required this.subtitle,
-    required this.selected,
-    required this.accent,
-    required this.onTap,
-  });
-
-  final String title;
-  final String subtitle;
-  final bool selected;
-  final Color accent;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 140),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: selected ? accent.withValues(alpha: 0.16) : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: selected ? accent : Colors.transparent,
-          ),
-        ),
-        child: Column(
-          children: <Widget>[
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: selected ? accent : AppDarkTheme.textPrimary,
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppDarkTheme.textSecondary,
-                fontSize: 11,
-              ),
-            ),
-          ],
         ),
       ),
     );
