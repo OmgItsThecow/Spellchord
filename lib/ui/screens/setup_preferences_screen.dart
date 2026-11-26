@@ -51,24 +51,12 @@ class _SetupPreferencesScreenState extends State<SetupPreferencesScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: AppDarkTheme.tonicColor
-                                  .withValues(alpha: 0.45),
-                            ),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(11),
-                            child: Image.asset(
-                              'assets/icon/app_icon.png',
-                              fit: BoxFit.cover,
-                              filterQuality: FilterQuality.high,
-                            ),
-                          ),
+                        Image.asset(
+                          'assets/icon/app_icon.png',
+                          width: 64,
+                          height: 64,
+                          fit: BoxFit.contain,
+                          filterQuality: FilterQuality.high,
                         ),
                         const SizedBox(width: 14),
                         Flexible(
