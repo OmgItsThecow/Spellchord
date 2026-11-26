@@ -38,20 +38,29 @@ class CreditsIntroScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
                     Container(
-                      width: 52,
-                      height: 52,
+                      width: 84,
+                      height: 84,
                       decoration: BoxDecoration(
-                        color: AppDarkTheme.tonicColor.withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(18),
                         border: Border.all(
                           color:
                               AppDarkTheme.tonicColor.withValues(alpha: 0.45),
                         ),
+                        boxShadow: <BoxShadow>[
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.35),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                      child: const Icon(
-                        Icons.music_note_rounded,
-                        size: 28,
-                        color: AppDarkTheme.tonicColor,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(17),
+                        child: Image.asset(
+                          'assets/icon/app_icon.png',
+                          fit: BoxFit.cover,
+                          filterQuality: FilterQuality.high,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 18),
