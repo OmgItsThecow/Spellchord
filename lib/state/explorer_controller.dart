@@ -519,6 +519,23 @@ class ExplorerController extends ChangeNotifier {
     playSelectedChord();
   }
 
+  void duplicateChordAt(int index) {
+    if (index < 0 || index >= _progression.length) {
+      return;
+    }
+    stopProgressionPlayback();
+    _pushUndoSnapshot();
+    final ChordSpec copy = _progression[index].copyWith(
+      id: 'dup_${DateTime.now().microsecondsSinceEpoch}_$index',
+    );
+    _progression.insert(index + 1, copy);
+    _activePresetName = null;
+    _selectedChordIndex = index + 1;
+    _recompute();
+    notifyListeners();
+    playSelectedChord();
+  }
+
   void removeChordAt(int index) {
     if (_progression.length <= 1 || index < 0 || index >= _progression.length) {
       return;

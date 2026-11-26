@@ -355,6 +355,15 @@ void main() {
       expect(controller.redo(), isTrue);
       expect(controller.progression.length, initialLen + 1);
       expect(controller.progression.last.id, 'undo_c');
+
+      // Duplicate chord at index 0 and verify unique ID + undo support
+      final ChordSpec originalFirst = controller.progression.first;
+      controller.duplicateChordAt(0);
+      expect(controller.progression.length, initialLen + 2);
+      expect(controller.progression[1].rootPc, originalFirst.rootPc);
+      expect(controller.progression[1].id, isNot(originalFirst.id));
+      expect(controller.undo(), isTrue);
+      expect(controller.progression.length, initialLen + 1);
     });
   });
 

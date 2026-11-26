@@ -652,4 +652,15 @@ class AppStrings {
   String get redoFeedback => isEs
       ? 'Cambio rehecho (Ctrl+Y).'
       : 'Redid change (Ctrl+Y).';
+
+  // --- Chord Context Menu (Right-Click) ---
+
+  String get ctxPlayChord => isEs ? 'Reproducir acorde' : 'Play chord';
+  String get ctxEditChord => isEs ? 'Editar acorde' : 'Edit chord';
+  String get ctxDuplicateChord => isEs ? 'Duplicar acorde' : 'Duplicate chord';
+  String get ctxNextInversion =>
+      isEs ? 'Siguiente inversión' : 'Next inversion';
+  String get ctxMoveLeft => isEs ? 'Mover a la izquierda' : 'Move left';
+  String get ctxMoveRight => isEs ? 'Mover a la derecha' : 'Move right';
+  String get ctxDeleteChord => isEs ? 'Eliminar acorde' : 'Delete chord';
 }

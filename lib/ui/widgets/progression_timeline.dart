@@ -269,6 +269,10 @@ class _ProgressionTimelineState extends State<ProgressionTimeline> {
                                     controller.updateChordAt(index, edited);
                                   }
                                 },
+                                onDuplicate: () =>
+                                    controller.duplicateChordAt(index),
+                                onNextInversion: () =>
+                                    controller.stepInversion(index, 1),
                                 onDelete: progression.length > 1
                                     ? () => controller.removeChordAt(index)
                                     : null,
@@ -316,6 +320,8 @@ class _ChordCard extends StatelessWidget {
     required this.preferFlat,
     required this.onSelect,
     required this.onEdit,
+    required this.onDuplicate,
+    required this.onNextInversion,
     required this.onDelete,
     required this.onMoveLeft,
     required this.onMoveRight,
@@ -334,9 +340,110 @@ class _ChordCard extends StatelessWidget {
   final bool preferFlat;
   final VoidCallback onSelect;
   final VoidCallback onEdit;
+  final VoidCallback onDuplicate;
+  final VoidCallback onNextInversion;
   final VoidCallback? onDelete;
   final VoidCallback? onMoveLeft;
   final VoidCallback? onMoveRight;
+
+  Future<void> _showContextMenu(
+    BuildContext context,
+    TapDownDetails details,
+  ) async {
+    onSelect();
+    final RenderBox overlay =
+        Overlay.of(context).context.findRenderObject()! as RenderBox;
+    final Offset pos = details.globalPosition;
+
+    final String? action = await showMenu<String>(
+      context: context,
+      color: AppDarkTheme.cardElevated,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: const BorderSide(color: AppDarkTheme.borderSubtle),
+      ),
+      position: RelativeRect.fromRect(
+        Rect.fromLTWH(pos.dx, pos.dy, 1, 1),
+        Offset.zero & overlay.size,
+      ),
+      items: <PopupMenuEntry<String>>[
+        _ctxItem(
+          'duplicate',
+          Icons.content_copy_rounded,
+          strings.ctxDuplicateChord,
+        ),
+        _ctxItem('edit', Icons.edit_rounded, strings.ctxEditChord),
+        _ctxItem('play', Icons.play_arrow_rounded, strings.ctxPlayChord),
+        _ctxItem('invert', Icons.swap_vert_rounded, strings.ctxNextInversion),
+        if (onMoveLeft != null || onMoveRight != null)
+          const PopupMenuDivider(height: 8),
+        if (onMoveLeft != null)
+          _ctxItem('left', Icons.chevron_left_rounded, strings.ctxMoveLeft),
+        if (onMoveRight != null)
+          _ctxItem('right', Icons.chevron_right_rounded, strings.ctxMoveRight),
+        if (onDelete != null) ...<PopupMenuEntry<String>>[
+          const PopupMenuDivider(height: 8),
+          _ctxItem(
+            'delete',
+            Icons.delete_outline_rounded,
+            strings.ctxDeleteChord,
+            color: AppDarkTheme.dominantColor,
+          ),
+        ],
+      ],
+    );
+
+    switch (action) {
+      case 'duplicate':
+        onDuplicate();
+        break;
+      case 'edit':
+        onEdit();
+        break;
+      case 'play':
+        controller.playSelectedChord(force: true);
+        break;
+      case 'invert':
+        onNextInversion();
+        break;
+      case 'left':
+        onMoveLeft?.call();
+        break;
+      case 'right':
+        onMoveRight?.call();
+        break;
+      case 'delete':
+        onDelete?.call();
+        break;
+    }
+  }
+
+  PopupMenuItem<String> _ctxItem(
+    String value,
+    IconData icon,
+    String label, {
+    Color color = AppDarkTheme.textPrimary,
+  }) {
+    return PopupMenuItem<String>(
+      value: value,
+      height: 36,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 10),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -360,6 +467,8 @@ class _ChordCard extends StatelessWidget {
       child: GestureDetector(
         onTap: onSelect,
         onDoubleTap: onEdit,
+        onSecondaryTapDown: (TapDownDetails details) =>
+            _showContextMenu(context, details),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 140),
           width: isCompact ? 132 : 196,
