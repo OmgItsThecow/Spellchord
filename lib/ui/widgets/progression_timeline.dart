@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 // ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 
@@ -12,8 +13,8 @@ import 'chord_builder_sheet.dart';
 import 'explained_control.dart';
 
 /// Horizontal interactive timeline of chords adapting between Basic Mode
-/// (note names & plain-language roles) and Advanced Mode (Roman numerals & MIDI numbers).
-class ProgressionTimeline extends StatelessWidget {
+/// (note names & plain-language roles) and Advanced Mode (Roman numerals & voicings).
+class ProgressionTimeline extends StatefulWidget {
   const ProgressionTimeline({
     super.key,
     required this.controller,
@@ -22,7 +23,41 @@ class ProgressionTimeline extends StatelessWidget {
   final ExplorerController controller;
 
   @override
+  State<ProgressionTimeline> createState() => _ProgressionTimelineState();
+}
+
+class _ProgressionTimelineState extends State<ProgressionTimeline> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _handlePointerSignal(PointerSignalEvent event) {
+    if (event is PointerScrollEvent && _scrollController.hasClients) {
+      final double delta = event.scrollDelta.dx != 0
+          ? event.scrollDelta.dx
+          : event.scrollDelta.dy;
+      if (delta == 0) {
+        return;
+      }
+      final ScrollPosition pos = _scrollController.position;
+      if (pos.maxScrollExtent <= 0) {
+        return;
+      }
+      final double target =
+          (pos.pixels + delta).clamp(0.0, pos.maxScrollExtent);
+      if (target != pos.pixels) {
+        _scrollController.jumpTo(target);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final ExplorerController controller = widget.controller;
     final List<ChordSpec> progression = controller.progression;
     final List<HarmonicAnalysisResult> analyses = controller.analyses;
     final List<ChordVoicing> voicings = controller.pianoVoicings;
@@ -166,68 +201,96 @@ class ProgressionTimeline extends StatelessWidget {
             builder: (BuildContext context, BoxConstraints constraints) {
               final bool isCompact = constraints.maxWidth < 600;
               return SizedBox(
-                height: isBasic ? 124 : (isCompact ? 158 : 154),
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: progression.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    final ChordSpec chord = progression[index];
-                    final HarmonicAnalysisResult analysis = analyses[index];
-                    final ChordVoicing voicing = voicings[index];
-                    final bool isSelected =
-                        index == controller.selectedChordIndex;
+                height: (isBasic ? 124 : (isCompact ? 158 : 154)) + 12,
+                child: Listener(
+                  onPointerSignal: _handlePointerSignal,
+                  child: Scrollbar(
+                    controller: _scrollController,
+                    thumbVisibility: true,
+                    interactive: true,
+                    child: ScrollConfiguration(
+                      behavior: ScrollConfiguration.of(context).copyWith(
+                        dragDevices: const <PointerDeviceKind>{
+                          PointerDeviceKind.touch,
+                          PointerDeviceKind.mouse,
+                          PointerDeviceKind.trackpad,
+                          PointerDeviceKind.stylus,
+                        },
+                      ),
+                      child: ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.only(bottom: 12),
+                        scrollDirection: Axis.horizontal,
+                        itemCount: progression.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          final ChordSpec chord = progression[index];
+                          final HarmonicAnalysisResult analysis =
+                              analyses[index];
+                          final ChordVoicing voicing = voicings[index];
+                          final bool isSelected =
+                              index == controller.selectedChordIndex;
 
-                    return Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        if (index > 0)
-                          isBasic
-                              ? const SizedBox(width: 8)
-                              : _TransitionConnector(
-                                  strings: strings,
-                                  totalDistance: voicing.totalSemitoneDistance,
-                                  commonTones: voicing.commonToneCount,
-                                  isCompact: isCompact,
-                                ),
-                        _ChordCard(
-                          controller: controller,
-                          strings: strings,
-                          isBasicMode: isBasic,
-                          isCompact: isCompact,
-                          index: index,
-                          totalCount: progression.length,
-                          chord: chord,
-                          analysis: analysis,
-                          voicing: voicing,
-                          isSelected: isSelected,
-                          preferFlat: preferFlat,
-                          onSelect: () => controller.selectChord(index),
-                          onEdit: () async {
-                            final ChordSpec? edited =
-                                await showChordBuilderDialog(
-                              context: context,
-                              strings: strings,
-                              isBasicMode: isBasic,
-                              initialChord: chord,
-                              preferFlat: preferFlat,
-                            );
-                            if (edited != null) {
-                              controller.updateChordAt(index, edited);
-                            }
-                          },
-                          onDelete: progression.length > 1
-                              ? () => controller.removeChordAt(index)
-                              : null,
-                          onMoveLeft: index > 0
-                              ? () => controller.reorderChord(index, index - 1)
-                              : null,
-                          onMoveRight: index < progression.length - 1
-                              ? () => controller.reorderChord(index, index + 1)
-                              : null,
-                        ),
-                      ],
-                    );
-                  },
+                          return Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              if (index > 0)
+                                isBasic
+                                    ? const SizedBox(width: 8)
+                                    : _TransitionConnector(
+                                        strings: strings,
+                                        totalDistance:
+                                            voicing.totalSemitoneDistance,
+                                        commonTones: voicing.commonToneCount,
+                                        isCompact: isCompact,
+                                      ),
+                              _ChordCard(
+                                controller: controller,
+                                strings: strings,
+                                isBasicMode: isBasic,
+                                isCompact: isCompact,
+                                index: index,
+                                totalCount: progression.length,
+                                chord: chord,
+                                analysis: analysis,
+                                voicing: voicing,
+                                isSelected: isSelected,
+                                preferFlat: preferFlat,
+                                onSelect: () => controller.selectChord(index),
+                                onEdit: () async {
+                                  final ChordSpec? edited =
+                                      await showChordBuilderDialog(
+                                    context: context,
+                                    strings: strings,
+                                    isBasicMode: isBasic,
+                                    initialChord: chord,
+                                    preferFlat: preferFlat,
+                                  );
+                                  if (edited != null) {
+                                    controller.updateChordAt(index, edited);
+                                  }
+                                },
+                                onDelete: progression.length > 1
+                                    ? () => controller.removeChordAt(index)
+                                    : null,
+                                onMoveLeft: index > 0
+                                    ? () => controller.reorderChord(
+                                          index,
+                                          index - 1,
+                                        )
+                                    : null,
+                                onMoveRight: index < progression.length - 1
+                                    ? () => controller.reorderChord(
+                                          index,
+                                          index + 1,
+                                        )
+                                    : null,
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                  ),
                 ),
               );
             },

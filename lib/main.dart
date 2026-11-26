@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 // ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 
@@ -7,6 +8,20 @@ import 'ui/theme/dark_theme.dart';
 
 void main() {
   runApp(const HarmonicExplorerApp());
+}
+
+/// Enables mouse-drag and trackpad scrolling on desktop platforms (Windows/Linux)
+/// in addition to touch and stylus input.
+class _DesktopScrollBehavior extends MaterialScrollBehavior {
+  const _DesktopScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => const <PointerDeviceKind>{
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.trackpad,
+        PointerDeviceKind.stylus,
+      };
 }
 
 /// Root Flutter application enforcing strict dark-mode-only rendering across
@@ -38,6 +53,7 @@ class _HarmonicExplorerAppState extends State<HarmonicExplorerApp> {
     return MaterialApp(
       title: 'Spellchord — Harmonic & Modal Explorer',
       debugShowCheckedModeBanner: false,
+      scrollBehavior: const _DesktopScrollBehavior(),
       themeMode: ThemeMode.dark,
       theme: AppDarkTheme.themeData,
       darkTheme: AppDarkTheme.themeData,
