@@ -63,31 +63,16 @@ class KeyCenterBar extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Flexible(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Text(
-                      strings.appTitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppDarkTheme.textPrimary,
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.9,
-                      ),
-                    ),
-                    Text(
-                      isBasic ? strings.appSubtitleBasic : strings.appSubtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppDarkTheme.textMuted,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  strings.appTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppDarkTheme.textPrimary,
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.4,
+                  ),
                 ),
               ),
             ],
