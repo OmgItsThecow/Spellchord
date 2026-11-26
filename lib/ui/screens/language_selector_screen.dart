@@ -48,21 +48,22 @@ class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
                         Container(
-                          width: 44,
-                          height: 44,
+                          width: 48,
+                          height: 48,
                           decoration: BoxDecoration(
-                            color:
-                                AppDarkTheme.tonicColor.withValues(alpha: 0.14),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: AppDarkTheme.tonicColor
                                   .withValues(alpha: 0.45),
                             ),
                           ),
-                          child: const Icon(
-                            Icons.graphic_eq_rounded,
-                            size: 24,
-                            color: AppDarkTheme.tonicColor,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(11),
+                            child: Image.asset(
+                              'assets/icon/app_icon.png',
+                              fit: BoxFit.cover,
+                              filterQuality: FilterQuality.high,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 14),

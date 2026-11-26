@@ -55,19 +55,21 @@ class KeyCenterBar extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Container(
-                width: 30,
-                height: 30,
+                width: 32,
+                height: 32,
                 decoration: BoxDecoration(
-                  color: AppDarkTheme.tonicColor.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: AppDarkTheme.tonicColor.withValues(alpha: 0.4),
                   ),
                 ),
-                child: const Icon(
-                  Icons.graphic_eq_rounded,
-                  size: 18,
-                  color: AppDarkTheme.tonicColor,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(7),
+                  child: Image.asset(
+                    'assets/icon/app_icon.png',
+                    fit: BoxFit.cover,
+                    filterQuality: FilterQuality.high,
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
