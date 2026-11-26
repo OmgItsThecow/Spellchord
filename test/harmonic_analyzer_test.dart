@@ -359,22 +359,26 @@ void main() {
           await tester.tap(startBtn);
           await tester.pumpAndSettle();
 
-          // 4. Basic Mode (Piano + Voice Leading, then Guitar + Modal Interchange)
+          // 4. Basic Mode (Compact Basic Helper + Guitar)
+          expect(find.text('CHORD QUICK TOOLS'), findsOneWidget);
+          expect(find.textContaining('MIDI ['), findsNothing);
           controller.setVisualizerMode(VisualizerMode.guitar);
           await tester.pumpAndSettle();
           if (viewport.width < 600) {
             expect(find.textContaining('Frets '), findsOneWidget);
           }
 
+          // 5. Advanced Mode (Guitar + Modal Interchange, then Piano + Voice Leading)
+          controller.setComplexityMode(ComplexityMode.advanced);
+          controller.loadPresetProgression('Pop Anthem + Minor iv');
+          await tester.pumpAndSettle();
+          expect(find.textContaining('MIDI ['), findsNothing);
+
           final Finder modalTab = find.text('Modal Interchange');
           await tester.ensureVisible(modalTab);
           await tester.tap(modalTab);
           await tester.pumpAndSettle();
 
-          // 5. Advanced Mode (Guitar + Modal Interchange, then Piano + Voice Leading)
-          controller.setComplexityMode(ComplexityMode.advanced);
-          controller.loadPresetProgression('Pop Anthem + Minor iv');
-          await tester.pumpAndSettle();
           final Finder fineTuneBtn = find.text('Fine Tune ±1');
           if (fineTuneBtn.evaluate().isNotEmpty) {
             await tester.ensureVisible(fineTuneBtn);
@@ -501,7 +505,10 @@ void main() {
         // Still hidden before saving a preset
         expect(controller.isSecretRockPrimed, isTrue);
         expect(controller.isSecretImprovRevealed, isFalse);
-        expect(find.text('✦ Improv Oracle'), findsNothing);
+        expect(
+          find.text('SECRET ORACLE · IMPROVISATION SCALES & AESTHETIC VIBE'),
+          findsNothing,
+        );
 
         // Load Marusa preset and save as user preset to reveal secret oracle
         controller.loadPresetProgression('Marusa (Just the Two of Us)');
@@ -509,7 +516,10 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(controller.isSecretImprovRevealed, isTrue);
-        expect(find.text('✦ Improv Oracle'), findsOneWidget);
+        expect(
+          find.text('SECRET ORACLE · IMPROVISATION SCALES & AESTHETIC VIBE'),
+          findsOneWidget,
+        );
         expect(find.textContaining('gliding smoothly above the city streets'),
             findsOneWidget);
         expect(tester.takeException(), isNull);

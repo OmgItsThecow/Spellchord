@@ -180,7 +180,7 @@ class _PianoKeyboardVisualizerState extends State<PianoKeyboardVisualizer> {
                   children: <Widget>[
                     Flexible(
                       child: Text(
-                        '${strings.pianoRangeLabel}: ${MidiPitch.midiLabel(startMidi, preferFlat: preferFlat, includeMidiNumber: !isBasic)} – ${MidiPitch.midiLabel(startMidi + keyCount - 1, preferFlat: preferFlat, includeMidiNumber: !isBasic)}',
+                        '${strings.pianoRangeLabel}: ${MidiPitch.midiLabel(startMidi, preferFlat: preferFlat, includeMidiNumber: false)} – ${MidiPitch.midiLabel(startMidi + keyCount - 1, preferFlat: preferFlat, includeMidiNumber: false)}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -566,7 +566,7 @@ class PianoKeyboardPainter extends CustomPainter {
 
     _drawCenteredText(
       canvas,
-      (compact || isBasicMode) ? noteName : '$noteName\n$midi',
+      noteName,
       Offset(centerX, bottomY - (compact ? 2 : 4)),
       const TextStyle(
         color: Color(0xFF0D1114),

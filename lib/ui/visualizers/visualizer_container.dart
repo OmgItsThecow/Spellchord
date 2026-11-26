@@ -29,7 +29,6 @@ class VisualizerContainer extends StatelessWidget {
     final GuitarVoicing? guitarVoicing = controller.selectedGuitarVoicing;
     final bool preferFlat = controller.preferFlats;
     final bool isPiano = controller.visualizerMode == VisualizerMode.piano;
-    final bool isBasic = controller.isBasicMode;
     final AppStrings strings = controller.strings;
 
     final List<int> activeMidi = isPiano
@@ -116,15 +115,6 @@ class VisualizerContainer extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    if (!isBasic)
-                      Text(
-                        'MIDI [${activeMidi.join(", ")}]',
-                        style: const TextStyle(
-                          color: AppDarkTheme.textSecondary,
-                          fontSize: 12,
-                          fontFamily: 'monospace',
-                        ),
-                      ),
                     Text(
                       activeMidi
                           .map(
@@ -135,12 +125,10 @@ class VisualizerContainer extends StatelessWidget {
                             ),
                           )
                           .join(' · '),
-                      style: TextStyle(
-                        color: isBasic
-                            ? AppDarkTheme.textSecondary
-                            : AppDarkTheme.textMuted,
-                        fontSize: isBasic ? 12.5 : 11.5,
-                        fontWeight: isBasic ? FontWeight.w600 : FontWeight.w400,
+                      style: const TextStyle(
+                        color: AppDarkTheme.textSecondary,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],

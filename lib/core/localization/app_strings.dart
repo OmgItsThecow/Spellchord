@@ -37,12 +37,12 @@ class AppStrings {
   String get advancedModeLabel => isEs ? 'Avanzado' : 'Advanced';
 
   String get switchToBasicTip => isEs
-      ? 'Cambiar a Modo Básico (vista simplificada para principiantes sin números MIDI ni alteraciones complejas).'
-      : 'Switch to Basic Mode (simplified beginner layout without raw MIDI numbers or complex alterations).';
+      ? 'Cambiar a Modo Básico (vista limpia con escalas Mayor/Menor, acordes esenciales y sugerencias rápidas).'
+      : 'Switch to Basic Mode (clean layout with Major/Minor scales, core chords, and quick suggestions).';
 
   String get switchToAdvancedTip => isEs
-      ? 'Cambiar a Modo Avanzado (números MIDI, los 7 modos, tabla SATB por voz y afinaciones personalizadas).'
-      : 'Switch to Advanced Mode (full MIDI numbers, all 7 modes, SATB voice table, and custom guitar tunings).';
+      ? 'Cambiar a Modo Avanzado (los 7 modos, tensiones, intercambio modal completo, tabla voz por voz y afinaciones personalizadas).'
+      : 'Switch to Advanced Mode (all 7 modes, tensions, full modal interchange, voice-by-voice table, and custom guitar tunings).';
 
   String get toggleLanguageTip => isEs
       ? 'Cambiar el idioma de la interfaz entre español e inglés.'
@@ -528,12 +528,12 @@ class AppStrings {
       : 'Toggle String $stringNumber (${enabled ? "Active" : "Muted"}). Muted strings are excluded from chord voicing calculations.';
 
   String tuneDownTip(int stringNumber, int openMidi) => isEs
-      ? 'Bajar la Cuerda $stringNumber 1 semitono (MIDI actual: $openMidi).'
-      : 'Tune String $stringNumber down by 1 semitone (current MIDI: $openMidi).';
+      ? 'Bajar la Cuerda $stringNumber 1 semitono.'
+      : 'Tune String $stringNumber down by 1 semitone.';
 
   String tuneUpTip(int stringNumber, int openMidi) => isEs
-      ? 'Subir la Cuerda $stringNumber 1 semitono (MIDI actual: $openMidi).'
-      : 'Tune String $stringNumber up by 1 semitone (current MIDI: $openMidi).';
+      ? 'Subir la Cuerda $stringNumber 1 semitono.'
+      : 'Tune String $stringNumber up by 1 semitone.';
 
   String fretWindowLabel(int startFret, int endFret) =>
       isEs ? 'Trastes $startFret–$endFret' : 'Frets $startFret–$endFret';
@@ -552,7 +552,7 @@ class AppStrings {
 
   String get voiceLeadingTabTip => isEs
       ? 'Ver inversiones y movimiento de notas para el acorde seleccionado.'
-      : 'Inspect inversions and voice-by-voice MIDI semitone motion for the selected chord.';
+      : 'Inspect inversions and voice-by-voice note motion for the selected chord.';
   String get modalInterchangeTabTip => isEs
       ? 'Explorar acordes prestados de modos paralelos y sustituir el acorde actual.'
       : 'Compare parallel modes and substitute borrowed chords into the selected slot.';
@@ -601,12 +601,12 @@ class AppStrings {
       isEs ? 'Nivel de experiencia' : 'Experience level';
 
   String get setupBasicSubtitle => isEs
-      ? 'Guiado · Sin números MIDI'
-      : 'Guided · No raw MIDI numbers';
+      ? 'Vista limpia · Mayor/Menor y acordes esenciales'
+      : 'Clean layout · Major/Minor & core chords';
 
   String get setupAdvancedSubtitle => isEs
-      ? 'MIDI completo y motor de 7 modos'
-      : 'Full MIDI & 7-mode engine';
+      ? '7 modos, tensiones, intercambio modal y afinaciones'
+      : '7 modes, tensions, modal interchange & tunings';
 
   String get setupInstrumentHeading =>
       isEs ? 'Modo de instrumento' : 'Instrument mode';
@@ -628,4 +628,18 @@ class AppStrings {
   String get setupFooterHint => isEs
       ? 'Puedes cambiar Básico/Avanzado, Piano/Guitarra y EN/ES en cualquier momento en la barra superior.'
       : 'You can switch Basic/Advanced, Piano/Guitar, and EN/ES anytime in the workspace.';
+
+  // --- Compact Basic Helper Panel ---
+
+  String get basicHelperTitle =>
+      isEs ? 'ATAJOS DEL ACORDE' : 'CHORD QUICK TOOLS';
+
+  String get basicInversionLabel => isEs ? 'Posición' : 'Voicing';
+
+  String get basicQuickSwapsLabel =>
+      isEs ? 'Probar otro color:' : 'Try another color:';
+
+  String get basicQuickSwapsEmpty => isEs
+      ? 'Toca cualquier acorde arriba para ver variaciones rápidas.'
+      : 'Tap any chord above to see quick variations.';
 }

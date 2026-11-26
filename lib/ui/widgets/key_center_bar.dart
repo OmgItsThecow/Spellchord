@@ -322,26 +322,27 @@ class KeyCenterBar extends StatelessWidget {
                         ),
                       ),
                     ),
-                    ExplainedControl(
-                      controller: controller,
-                      explanation: strings.keyLockTip(isLocked),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(6),
-                        onTap: controller.toggleKeyLock,
-                        child: Padding(
-                          padding: const EdgeInsets.all(4),
-                          child: Icon(
-                            isLocked
-                                ? Icons.lock_rounded
-                                : Icons.lock_open_rounded,
-                            size: 16,
-                            color: isLocked
-                                ? AppDarkTheme.subdominantColor
-                                : AppDarkTheme.textSecondary,
+                    if (!isBasic)
+                      ExplainedControl(
+                        controller: controller,
+                        explanation: strings.keyLockTip(isLocked),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(6),
+                          onTap: controller.toggleKeyLock,
+                          child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: Icon(
+                              isLocked
+                                  ? Icons.lock_rounded
+                                  : Icons.lock_open_rounded,
+                              size: 16,
+                              color: isLocked
+                                  ? AppDarkTheme.subdominantColor
+                                  : AppDarkTheme.textSecondary,
+                            ),
                           ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -467,48 +468,52 @@ class KeyCenterBar extends StatelessWidget {
                 ),
               ),
 
-              // Global total movement + reset button
-              ExplainedControl(
-                controller: controller,
-                explanation: strings.optimalVlTip(isBasic: isBasic),
-                child: InkWell(
-                  onTap: controller.resetAllInversionsToOptimal,
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                    decoration: BoxDecoration(
-                      color: AppDarkTheme.tonicColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: AppDarkTheme.tonicColor.withValues(alpha: 0.35),
+              // Global total movement + reset button (Advanced Mode)
+              if (!isBasic)
+                ExplainedControl(
+                  controller: controller,
+                  explanation: strings.optimalVlTip(isBasic: isBasic),
+                  child: InkWell(
+                    onTap: controller.resetAllInversionsToOptimal,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 7,
                       ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        const Icon(
-                          Icons.auto_fix_high_rounded,
-                          size: 14,
-                          color: AppDarkTheme.tonicColor,
+                      decoration: BoxDecoration(
+                        color: AppDarkTheme.tonicColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color:
+                              AppDarkTheme.tonicColor.withValues(alpha: 0.35),
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          strings.optimalVlLabel(
-                            controller.totalProgressionSemitoneCost,
-                            isBasic: isBasic,
-                          ),
-                          style: const TextStyle(
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          const Icon(
+                            Icons.auto_fix_high_rounded,
+                            size: 14,
                             color: AppDarkTheme.tonicColor,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 6),
+                          Text(
+                            strings.optimalVlLabel(
+                              controller.totalProgressionSemitoneCost,
+                              isBasic: isBasic,
+                            ),
+                            style: const TextStyle(
+                              color: AppDarkTheme.tonicColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
             ],
           ),
         ],

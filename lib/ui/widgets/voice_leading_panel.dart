@@ -401,10 +401,12 @@ class VoiceLeadingPanel extends StatelessWidget {
                         : MidiPitch.midiLabel(
                             motion.fromMidi!,
                             preferFlat: preferFlat,
+                            includeMidiNumber: false,
                           );
                     final String toStr = MidiPitch.midiLabel(
                       motion.toMidi,
                       preferFlat: preferFlat,
+                      includeMidiNumber: false,
                     );
 
                     final Color badgeColor = motion.fromMidi == null

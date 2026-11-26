@@ -163,7 +163,7 @@ class ProgressionTimeline extends StatelessWidget {
             builder: (BuildContext context, BoxConstraints constraints) {
               final bool isCompact = constraints.maxWidth < 600;
               return SizedBox(
-                height: isCompact ? (isBasic ? 158 : 172) : 154,
+                height: isBasic ? 124 : (isCompact ? 158 : 154),
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   itemCount: progression.length,
@@ -178,12 +178,14 @@ class ProgressionTimeline extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
                         if (index > 0)
-                          _TransitionConnector(
-                            strings: strings,
-                            totalDistance: voicing.totalSemitoneDistance,
-                            commonTones: voicing.commonToneCount,
-                            isCompact: isCompact,
-                          ),
+                          isBasic
+                              ? const SizedBox(width: 8)
+                              : _TransitionConnector(
+                                  strings: strings,
+                                  totalDistance: voicing.totalSemitoneDistance,
+                                  commonTones: voicing.commonToneCount,
+                                  isCompact: isCompact,
+                                ),
                         _ChordCard(
                           controller: controller,
                           strings: strings,
@@ -389,44 +391,49 @@ class _ChordCard extends StatelessWidget {
               ),
               const Spacer(),
 
-              // Inversion badge
-              Row(
-                children: <Widget>[
-                  Flexible(
-                    child: Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: isManualInv
-                            ? AppDarkTheme.subdominantColor.withValues(alpha: 0.15)
-                            : AppDarkTheme.bgWorkspace,
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(
-                          color: isManualInv
-                              ? AppDarkTheme.subdominantColor
-                                  .withValues(alpha: 0.5)
-                              : AppDarkTheme.borderSubtle,
+              // Inversion badge (Advanced Mode)
+              if (!isBasicMode) ...<Widget>[
+                Row(
+                  children: <Widget>[
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 2,
                         ),
-                      ),
-                      child: Text(
-                        '${strings.shortInversionLabel(voicing.inversionIndex)} · ${isManualInv ? strings.manualTag : strings.autoTag}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
+                        decoration: BoxDecoration(
                           color: isManualInv
                               ? AppDarkTheme.subdominantColor
-                              : AppDarkTheme.textSecondary,
-                          fontSize: isCompact ? 10.0 : 11.0,
-                          fontWeight: FontWeight.w600,
+                                  .withValues(alpha: 0.15)
+                              : AppDarkTheme.bgWorkspace,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: isManualInv
+                                ? AppDarkTheme.subdominantColor
+                                    .withValues(alpha: 0.5)
+                                : AppDarkTheme.borderSubtle,
+                          ),
+                        ),
+                        child: Text(
+                          '${strings.shortInversionLabel(voicing.inversionIndex)} · ${isManualInv ? strings.manualTag : strings.autoTag}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: isManualInv
+                                ? AppDarkTheme.subdominantColor
+                                : AppDarkTheme.textSecondary,
+                            fontSize: isCompact ? 10.0 : 11.0,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              SizedBox(height: isCompact ? 4 : 6),
+                  ],
+                ),
+                SizedBox(height: isCompact ? 4 : 6),
+              ],
 
-              // Note names (Basic Mode) or Note Name + MIDI integer (Advanced Mode)
+              // Note names (Basic: pitch class, Advanced: note + octave, never raw MIDI)
               Wrap(
                 spacing: isCompact ? 3 : 4,
                 runSpacing: isCompact ? 2 : 3,
@@ -450,16 +457,19 @@ class _ChordCard extends StatelessWidget {
                                 MidiPitch.pitchClass(voicing.midiNotes[i]),
                                 preferFlat: preferFlat,
                               )
-                            : '${MidiPitch.midiLabel(voicing.midiNotes[i], preferFlat: preferFlat, includeMidiNumber: false)}:${voicing.midiNotes[i]}',
+                            : MidiPitch.midiLabel(
+                                voicing.midiNotes[i],
+                                preferFlat: preferFlat,
+                                includeMidiNumber: false,
+                              ),
                         style: TextStyle(
                           color: i == 0
                               ? AppDarkTheme.rootNoteHighlight
                               : AppDarkTheme.upperNoteHighlight,
                           fontSize: isCompact
-                              ? (isBasicMode ? 10.5 : 9.5)
+                              ? (isBasicMode ? 10.5 : 10.0)
                               : (isBasicMode ? 11.5 : 10.5),
                           fontWeight: FontWeight.w600,
-                          fontFamily: isBasicMode ? null : 'monospace',
                         ),
                       ),
                     ),

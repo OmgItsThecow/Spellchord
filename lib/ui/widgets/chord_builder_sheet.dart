@@ -168,7 +168,7 @@ class _ChordBuilderDialogState extends State<_ChordBuilderDialog> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${strings.pitchClassesPrefix}: $pcs  (${pcs.map((int pc) => MidiPitch.pitchClassName(pc, preferFlat: widget.preferFlat)).join(" - ")})',
+                        '${strings.pitchClassesPrefix}: ${pcs.map((int pc) => MidiPitch.pitchClassName(pc, preferFlat: widget.preferFlat)).join(" · ")}',
                         style: const TextStyle(
                           color: AppDarkTheme.rootNoteHighlight,
                           fontSize: 11.5,
@@ -181,9 +181,7 @@ class _ChordBuilderDialogState extends State<_ChordBuilderDialog> {
                 const SizedBox(height: 14),
               ],
 
-              _SectionLabel(
-                isBasic ? strings.rootBasicSection : strings.rootPcSection,
-              ),
+              _SectionLabel(strings.rootBasicSection),
               const SizedBox(height: 6),
               Wrap(
                 spacing: 6,
@@ -195,7 +193,7 @@ class _ChordBuilderDialogState extends State<_ChordBuilderDialog> {
                     preferFlat: widget.preferFlat,
                   );
                   return _SelectableChip(
-                    label: isBasic ? name : '$name ($pc)',
+                    label: name,
                     selected: selected,
                     accent: AppDarkTheme.rootNoteHighlight,
                     onTap: () => setState(() => _rootPc = pc),

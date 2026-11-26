@@ -376,7 +376,7 @@ class _GuitarFretboardVisualizerState extends State<GuitarFretboardVisualizer> {
                             ],
                             Expanded(
                               child: Text(
-                                isBasic ? openLabel : '$openLabel($openMidi)',
+                                openLabel,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: enabled

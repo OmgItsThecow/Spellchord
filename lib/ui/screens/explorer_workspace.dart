@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../state/explorer_controller.dart';
 import '../theme/dark_theme.dart';
 import '../visualizers/visualizer_container.dart';
+import '../widgets/basic_helper_panel.dart';
 import '../widgets/explained_control.dart';
 import '../widgets/key_center_bar.dart';
 import '../widgets/modal_interchange_panel.dart';
@@ -51,6 +52,9 @@ class _ExplorerWorkspaceState extends State<ExplorerWorkspace> {
           return SetupPreferencesScreen(controller: widget.controller);
         }
 
+        final bool isBasic = widget.controller.isBasicMode;
+        final bool showSecret = widget.controller.isSecretImprovRevealed;
+
         return Scaffold(
           backgroundColor: AppDarkTheme.bgPrimary,
           body: SafeArea(
@@ -80,13 +84,72 @@ class _ExplorerWorkspaceState extends State<ExplorerWorkspace> {
                                   ),
                                 ),
                               ),
-                              SizedBox(
-                                height: 360,
-                                child: _buildTheorySplit(isWide),
-                              ),
+                              if (isBasic) ...<Widget>[
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    12,
+                                    0,
+                                    12,
+                                    12,
+                                  ),
+                                  child: BasicHelperPanel(
+                                    controller: widget.controller,
+                                  ),
+                                ),
+                                if (showSecret)
+                                  SizedBox(
+                                    height: 320,
+                                    child: Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                        12,
+                                        0,
+                                        12,
+                                        12,
+                                      ),
+                                      child: SecretImprovPanel(
+                                        controller: widget.controller,
+                                      ),
+                                    ),
+                                  ),
+                              ] else
+                                SizedBox(
+                                  height: 360,
+                                  child: _buildTheorySplit(isWide),
+                                ),
                             ],
                           ),
                         ),
+                      ),
+                      _HelpStatusBar(
+                        message: widget.controller.activeHelpMessage,
+                      ),
+                    ],
+                  );
+                }
+
+                if (isBasic) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      KeyCenterBar(controller: widget.controller),
+                      ProgressionTimeline(controller: widget.controller),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+                        child: BasicHelperPanel(controller: widget.controller),
+                      ),
+                      if (showSecret)
+                        Expanded(
+                          flex: 4,
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+                            child: SecretImprovPanel(
+                              controller: widget.controller,
+                            ),
+                          ),
+                        ),
+                      Expanded(
+                        flex: 6,
+                        child: VisualizerContainer(controller: widget.controller),
                       ),
                       _HelpStatusBar(
                         message: widget.controller.activeHelpMessage,
