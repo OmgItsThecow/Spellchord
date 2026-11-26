@@ -31,10 +31,29 @@ jobs:
       - name: Build Windows release executable
         run: flutter build windows --release
 
-      - name: Upload Spellchord-Windows-x64 artifact
+      - name: Build Windows Inno Setup installer (.exe)
+        shell: pwsh
+        run: |
+          $iscc = Get-Command iscc -ErrorAction SilentlyContinue
+          if ($iscc) {
+            & $iscc.Source windows\installer\spellchord.iss
+          } elseif (Test-Path "C:\Program Files (x86)\Inno Setup 6\ISCC.exe") {
+            & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" windows\installer\spellchord.iss
+          } else {
+            choco install innosetup -y --no-progress
+            & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" windows\installer\spellchord.iss
+          }
+
+      - name: Upload Spellchord-Windows-x64-Installer artifact
         uses: actions/upload-artifact@v7
         with:
-          name: Spellchord-Windows-x64
+          name: Spellchord-Windows-x64-Installer
+          path: build/windows/installer/Spellchord-Setup-x64.exe
+
+      - name: Upload Spellchord-Windows-x64-Portable artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: Spellchord-Windows-x64-Portable
           path: build/windows/x64/runner/Release/
 
   build-android:
@@ -92,7 +111,10 @@ jobs:
           flutter pub get
 
       - name: Build Linux release bundle
-        run: flutter build linux --release
+        run: |
+          flutter build linux --release
+          cp linux/install.sh build/linux/x64/release/bundle/install.sh
+          chmod +x build/linux/x64/release/bundle/install.sh
 
       - name: Upload Spellchord-Linux-x64 artifact
         uses: actions/upload-artifact@v7
