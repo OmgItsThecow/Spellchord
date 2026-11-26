@@ -78,45 +78,72 @@ class ChordSynthesizer {
   }
 
   static Float64List _synthesizeGuitar(List<int> notes) {
-    const double durationSec = 1.55;
+    const double durationSec = 1.65;
     final int totalSamples = (sampleRate * durationSec).round();
     final Float64List mix = Float64List(totalSamples);
-    const int tailFadeSamples = 882; // ~40 ms
 
-    // Deterministic LCG for consistent plucked string excitation.
-    int seed = 0x5EED1234;
-    double nextRandom() {
-      seed = (seed * 1664525 + 1013904223) & 0x7fffffff;
-      return (seed / 0x3fffffff) - 1.0;
-    }
+    const int harmonicCount = 10;
+    const double pluckPos = 0.21;
+    const double inharmonicity = 0.000035;
+    const double strumStepSec = 0.012; // Subtle 12 ms per-string strum stagger
+    const int attackSamples = 100; // ~4.5 ms smooth pluck attack
+    const int tailFadeSamples = 1323; // ~60 ms
+
+    // Precompute pluck-position harmonic amplitudes (1-indexed harmonics).
+    final List<double> harmonicAmps = List<double>.generate(
+      harmonicCount,
+      (int h) {
+        final int n = h + 1;
+        if (n == 1) {
+          return 1.0;
+        }
+        final double pluckWeight = math.sin(math.pi * n * pluckPos).abs();
+        return (0.35 + 0.65 * pluckWeight) / math.pow(n, 1.28);
+      },
+      growable: false,
+    );
+
+    final int lastIdx = math.max(1, notes.length - 1);
 
     for (int nIdx = 0; nIdx < notes.length; nIdx++) {
       final int midi = notes[nIdx];
       final double freq = midiToFrequency(midi);
-      final int delayLen = (sampleRate / freq).round().clamp(2, 2048);
-      final int startSample = (nIdx * 0.022 * sampleRate).round();
+      final int startSample = (nIdx * strumStepSec * sampleRate).round();
+      final double baseDecay = 1.45 + (midi - 40).clamp(0, 48) * 0.024;
+      // Slightly balance bass vs. treble strings so upper chord voices sing.
+      final double stringGain = 0.88 + 0.12 * (nIdx / lastIdx);
 
-      // Brightness-adjusted Karplus-Strong damping factor.
-      final double damping =
-          0.9965 - ((midi - 40).clamp(0, 48) * 0.000045);
-
-      final Float64List ring = Float64List(delayLen);
-      double prevNoise = 0.0;
-      for (int k = 0; k < delayLen; k++) {
-        final double raw = nextRandom();
-        // Gentle 1-pole lowpass on initial pluck so high strings sound warm.
-        prevNoise = 0.55 * raw + 0.45 * prevNoise;
-        ring[k] = prevNoise;
+      // Precompute valid harmonic frequencies and decay rates for this string.
+      final List<double> hFreqs = <double>[];
+      final List<double> hDecays = <double>[];
+      final List<double> hAmps = <double>[];
+      for (int h = 0; h < harmonicCount; h++) {
+        final int n = h + 1;
+        final double hFreq =
+            freq * n * math.sqrt(1.0 + inharmonicity * n * n);
+        if (hFreq >= sampleRate * 0.45) {
+          break;
+        }
+        hFreqs.add(2.0 * math.pi * hFreq);
+        hDecays.add(baseDecay + math.pow(h, 1.35) * 1.45);
+        hAmps.add(harmonicAmps[h]);
       }
 
-      int ptr = 0;
       for (int i = startSample; i < totalSamples; i++) {
-        final int prevPtr = (ptr - 1 + delayLen) % delayLen;
-        final double current = ring[ptr];
-        mix[i] += current;
+        final int dt = i - startSample;
+        final double t = dt / sampleRate;
+        final double attack = dt < attackSamples
+            ? 0.5 * (1.0 - math.cos(math.pi * dt / attackSamples))
+            : 1.0;
 
-        ring[ptr] = damping * (0.52 * current + 0.48 * ring[prevPtr]);
-        ptr = (ptr + 1) % delayLen;
+        double sample = 0.0;
+        for (int h = 0; h < hFreqs.length; h++) {
+          sample += hAmps[h] *
+              math.exp(-t * hDecays[h]) *
+              math.sin(hFreqs[h] * t);
+        }
+
+        mix[i] += sample * attack * stringGain;
       }
     }
 

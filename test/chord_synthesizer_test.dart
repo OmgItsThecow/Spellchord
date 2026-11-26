@@ -50,6 +50,28 @@ void main() {
       );
       expect(wav.length, 44);
     });
+
+    test('guitar synthesis sustains clear chord tone without noise dominance', () {
+      final Uint8List wav = ChordSynthesizer.synthesizeChordWav(
+        midiNotes: const <int>[40, 47, 52, 56, 59, 64],
+        instrument: SynthInstrument.guitar,
+      );
+      final ByteData data = ByteData.sublistView(wav, 44);
+      const int rate = ChordSynthesizer.sampleRate;
+      final int sustainStart = (0.15 * rate).round();
+      final int sustainEnd = (0.60 * rate).round();
+
+      double sumSq = 0.0;
+      int count = 0;
+      for (int i = sustainStart; i < sustainEnd; i++) {
+        final double sample = data.getInt16(i * 2, Endian.little) / 32767.0;
+        sumSq += sample * sample;
+        count++;
+      }
+      final double sustainRms = sumSq > 0 ? (sumSq / count) : 0.0;
+      // Sustain region should carry substantial musical energy (RMS > 0.12).
+      expect(sustainRms, greaterThan(0.12 * 0.12));
+    });
   });
 
   group('ExplorerController Audio Controls', () {
