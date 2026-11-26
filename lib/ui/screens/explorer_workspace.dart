@@ -42,22 +42,63 @@ class _ExplorerWorkspaceState extends State<ExplorerWorkspace> {
           _wasSecretRevealed = true;
           _narrowPanelTab = 2;
         }
+
+        final Widget activeScreen;
         if (!widget.controller.hasSelectedLanguage) {
-          return LanguageSelectorScreen(controller: widget.controller);
-        }
-        if (!widget.controller.hasDismissedCredits) {
-          return CreditsIntroScreen(controller: widget.controller);
-        }
-        if (!widget.controller.hasCompletedSetup) {
-          return SetupPreferencesScreen(controller: widget.controller);
+          activeScreen = LanguageSelectorScreen(
+            key: const ValueKey<String>('onboarding_language'),
+            controller: widget.controller,
+          );
+        } else if (!widget.controller.hasDismissedCredits) {
+          activeScreen = CreditsIntroScreen(
+            key: const ValueKey<String>('onboarding_credits'),
+            controller: widget.controller,
+          );
+        } else if (!widget.controller.hasCompletedSetup) {
+          activeScreen = SetupPreferencesScreen(
+            key: const ValueKey<String>('onboarding_setup'),
+            controller: widget.controller,
+          );
+        } else {
+          activeScreen = _buildMainWorkspace();
         }
 
-        final bool isBasic = widget.controller.isBasicMode;
-        final bool showSecret = widget.controller.isSecretImprovRevealed;
+        return ColoredBox(
+          color: AppDarkTheme.bgPrimary,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 520),
+            reverseDuration: const Duration(milliseconds: 420),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return FadeTransition(
+                opacity: animation,
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.985, end: 1.0).animate(
+                    CurvedAnimation(
+                      parent: animation,
+                      curve: Curves.easeOutCubic,
+                    ),
+                  ),
+                  child: child,
+                ),
+              );
+            },
+            child: activeScreen,
+          ),
+        );
+      },
+    );
+  }
 
-        return Scaffold(
-          backgroundColor: AppDarkTheme.bgPrimary,
-          body: SafeArea(
+  Widget _buildMainWorkspace() {
+    final bool isBasic = widget.controller.isBasicMode;
+    final bool showSecret = widget.controller.isSecretImprovRevealed;
+
+    return Scaffold(
+      key: const ValueKey<String>('main_workspace'),
+      backgroundColor: AppDarkTheme.bgPrimary,
+      body: SafeArea(
             child: LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) {
                 final bool isWide = constraints.maxWidth >= 860;
@@ -180,8 +221,6 @@ class _ExplorerWorkspaceState extends State<ExplorerWorkspace> {
             ),
           ),
         );
-      },
-    );
   }
 
   Widget _buildTheorySplit(bool isWide) {
