@@ -1022,28 +1022,26 @@ class ExplorerController extends ChangeNotifier {
       case 'ii-V-I + Sec Dom':
       default:
         return <ChordSpec>[
-          ChordSpec.major7(0, id: 'j_1'), // Cmaj7 (IΔ7)
-          ChordSpec.dominant7(
-            9,
-            id: 'j_2',
-            alterations: const {ChordAlteration.flat9},
-          ), // A7(b9) (V7/ii)
           ChordSpec.minor7(
             2,
-            id: 'j_3',
-            extensions: const {ChordExtension.ninth},
+            id: 'j_1',
+            extensions: const <ChordExtension>{ChordExtension.ninth},
           ), // Dm9 (ii9)
-          ChordSpec.minor7(5, id: 'j_4'), // Fm7 (iv7 borrowed from C Aeolian)
           ChordSpec.dominant7(
             7,
-            id: 'j_5',
-            extensions: const {ChordExtension.thirteenth},
+            id: 'j_2',
+            extensions: const <ChordExtension>{ChordExtension.thirteenth},
           ), // G13 (V13)
           ChordSpec.major7(
             0,
-            id: 'j_6',
-            extensions: const {ChordExtension.ninth},
-          ), // Cmaj9 (IΔ9)
+            id: 'j_3',
+            extensions: const <ChordExtension>{ChordExtension.ninth},
+          ), // Cmaj9 (IΔ7)
+          ChordSpec.dominant7(
+            9,
+            id: 'j_4',
+            alterations: const <ChordAlteration>{ChordAlteration.flat9},
+          ), // A7(b9) (V7/ii -> loops back to Dm9)
         ];
     }
   }

@@ -80,6 +80,150 @@ void main() {
       expect(results[5].category, HarmonicCategory.dominant);
       expect(results[5].romanNumeral, 'V7');
     });
+
+    test('detects Parent Major for all 12 Marusa transpositions and 4-chord Royal Road', () {
+      for (int tonic = 0; tonic < 12; tonic++) {
+        for (final bool useDominantIii in const <bool>[false, true]) {
+          final List<ChordSpec> marusa = <ChordSpec>[
+            ChordSpec.major7((tonic + 5) % 12, id: 'm1'),
+            useDominantIii
+                ? ChordSpec.dominant7((tonic + 4) % 12, id: 'm2')
+                : ChordSpec.minor7((tonic + 4) % 12, id: 'm2'),
+            ChordSpec.minor7((tonic + 9) % 12, id: 'm3'),
+            ChordSpec.minor7((tonic + 7) % 12, id: 'm4'),
+            ChordSpec.dominant7(tonic, id: 'm5'),
+          ];
+          final KeySignatureResult key = HarmonicAnalyzer.detectKeyCenter(marusa);
+          expect(key.tonicPc, tonic);
+          expect(key.mode, ScaleMode.ionian);
+
+          final List<HarmonicAnalysisResult> analysis =
+              HarmonicAnalyzer.analyzeProgression(
+            progression: marusa,
+            keyTonicPc: key.tonicPc,
+            keyMode: key.mode,
+          );
+          expect(analysis.first.romanNumeral, 'IVΔ7');
+        }
+      }
+
+      final List<ChordSpec> royalRoad4 = <ChordSpec>[
+        ChordSpec.major7(5, id: 'r1'),
+        ChordSpec.dominant7(7, id: 'r2'),
+        ChordSpec.minor7(4, id: 'r3'),
+        ChordSpec.minor7(9, id: 'r4'),
+      ];
+      final KeySignatureResult rrKey =
+          HarmonicAnalyzer.detectKeyCenter(royalRoad4);
+      expect(rrKey.tonicPc, 0);
+      expect(rrKey.mode, ScaleMode.ionian);
+      expect(
+        HarmonicAnalyzer.analyzeProgression(
+          progression: royalRoad4,
+          keyTonicPc: rrKey.tonicPc,
+          keyMode: rrKey.mode,
+        ).map((HarmonicAnalysisResult r) => r.romanNumeral).toList(),
+        const <String>['IVΔ7', 'V7', 'iii7', 'vi7'],
+      );
+    });
+
+    test('preserves natural minor detection for Aeolian loops', () {
+      final List<ChordSpec> amLoop1 = <ChordSpec>[
+        ChordSpec.minor(9, id: 'a1'), // Am
+        ChordSpec.major(7, id: 'a2'), // G
+        ChordSpec.major(5, id: 'a3'), // F
+        ChordSpec.major(7, id: 'a4'), // G
+      ];
+      final KeySignatureResult k1 = HarmonicAnalyzer.detectKeyCenter(amLoop1);
+      expect(k1.tonicPc, 9);
+      expect(k1.mode, ScaleMode.aeolian);
+
+      final List<ChordSpec> amLoop2 = <ChordSpec>[
+        ChordSpec.minor(9, id: 'b1'), // Am
+        ChordSpec.major(5, id: 'b2'), // F
+        ChordSpec.major(0, id: 'b3'), // C
+        ChordSpec.major(7, id: 'b4'), // G
+      ];
+      final KeySignatureResult k2 = HarmonicAnalyzer.detectKeyCenter(amLoop2);
+      expect(k2.tonicPc, 9);
+      expect(k2.mode, ScaleMode.aeolian);
+    });
+
+    test('detects expected key centers and first-chord Roman numerals for all 10 presets', () {
+      final ExplorerController controller = ExplorerController(
+        loadPersistedPresets: false,
+        enableAudio: false,
+      );
+      addTearDown(controller.dispose);
+
+      const Map<String, ({int tonic, ScaleMode mode, String firstRoman})>
+          expectedByPreset =
+          <String, ({int tonic, ScaleMode mode, String firstRoman})>{
+        'Pop Anthem + Minor iv': (
+          tonic: 0,
+          mode: ScaleMode.ionian,
+          firstRoman: 'I',
+        ),
+        '50s / Soul Turnaround': (
+          tonic: 7,
+          mode: ScaleMode.ionian,
+          firstRoman: 'I',
+        ),
+        'Andalusian Cadence': (
+          tonic: 9,
+          mode: ScaleMode.aeolian,
+          firstRoman: 'i',
+        ),
+        'Royal Road (J-Pop)': (
+          tonic: 0,
+          mode: ScaleMode.ionian,
+          firstRoman: 'IVΔ7',
+        ),
+        'Marusa (Just the Two of Us)': (
+          tonic: 0,
+          mode: ScaleMode.ionian,
+          firstRoman: 'IVΔ7',
+        ),
+        'Bossa Nova Turnaround': (
+          tonic: 5,
+          mode: ScaleMode.ionian,
+          firstRoman: 'IΔ7',
+        ),
+        'ii-V-I + Sec Dom': (
+          tonic: 0,
+          mode: ScaleMode.ionian,
+          firstRoman: 'ii9',
+        ),
+        'Modal Interchange': (
+          tonic: 0,
+          mode: ScaleMode.ionian,
+          firstRoman: 'IΔ7',
+        ),
+        'Diminished Passing': (
+          tonic: 5,
+          mode: ScaleMode.ionian,
+          firstRoman: 'IΔ7',
+        ),
+        'Neo-Soul Extended': (
+          tonic: 0,
+          mode: ScaleMode.aeolian,
+          firstRoman: 'i9',
+        ),
+      };
+
+      expect(expectedByPreset.keys, containsAll(ExplorerController.presetNames));
+      for (final String presetName in ExplorerController.presetNames) {
+        controller.loadPresetProgression(presetName);
+        final expected = expectedByPreset[presetName]!;
+        expect(controller.activeKeyTonicPc, expected.tonic, reason: presetName);
+        expect(controller.activeKeyMode, expected.mode, reason: presetName);
+        expect(
+          controller.analyses.first.romanNumeral,
+          expected.firstRoman,
+          reason: presetName,
+        );
+      }
+    });
   });
 
   group('Custom User Presets', () {
@@ -135,20 +279,24 @@ void main() {
       addTearDown(controller.dispose);
 
       // Default preset is ii-V-I + Sec Dom in C Major:
-      // Cmaj7, A7(b9), Dm9, Fm7, G13, Cmaj9
+      // Dm9 (ii9), G13 (V13), Cmaj9 (IΔ7), A7(b9) (V7/ii)
       expect(controller.activeKeyTonicPc, 0);
       expect(controller.activeKeyMode, ScaleMode.ionian);
+      expect(
+        controller.analyses.map((HarmonicAnalysisResult a) => a.romanNumeral).toList(),
+        const <String>['ii9', 'V13', 'IΔ7', 'V7/ii'],
+      );
 
       // Switch root from C (0) to D (2) in Ionian: all chords transpose +2 semitones
       controller.setLockedKey(2, ScaleMode.ionian);
       expect(controller.activeKeyTonicPc, 2);
       expect(
         controller.progression.map((ChordSpec c) => c.baseSymbol()).toList(),
-        const <String>['Dmaj7', 'B7(b9)', 'Em9', 'Gm7', 'A13', 'Dmaj9'],
+        const <String>['Em9', 'A13', 'Dmaj9', 'B7(b9)'],
       );
       expect(
         controller.analyses.map((HarmonicAnalysisResult a) => a.romanNumeral).toList(),
-        const <String>['IΔ7', 'V7/ii', 'ii9', 'iv7', 'V13', 'IΔ7'],
+        const <String>['ii9', 'V13', 'IΔ7', 'V7/ii'],
       );
 
       // Load Pop Anthem + Minor iv in C Major (C, G, Am, F, Fm, C) and switch mode to C Aeolian
@@ -303,6 +451,12 @@ void main() {
 
       normalCtrl.loadPresetProgression('Marusa (Just the Two of Us)');
       expect(normalCtrl.progression.length, 5);
+      expect(normalCtrl.activeKeyTonicPc, 0);
+      expect(normalCtrl.activeKeyMode, ScaleMode.ionian);
+      expect(
+        normalCtrl.analyses.map((HarmonicAnalysisResult a) => a.romanNumeral).toList(),
+        const <String>['IVΔ7', 'iii7', 'vi7', 'v7', 'V7/IV'],
+      );
       expect(
         normalCtrl.progression.map((ChordSpec c) => c.symbol()).toList(),
         const <String>['Fmaj7', 'Em7', 'Am7', 'Gm7', 'C7'],

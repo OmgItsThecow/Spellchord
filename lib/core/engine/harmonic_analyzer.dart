@@ -79,11 +79,15 @@ class HarmonicAnalyzer {
     ScaleMode mode,
   ) {
     final Set<int> scalePcs = mode.pitchClassSet(tonicPc);
+    final List<int> modeIntervals = mode.semitoneIntervals;
+    final bool isIonian = mode == ScaleMode.ionian;
+    final int n = progression.length;
     double score = 0.0;
 
-    for (int i = 0; i < progression.length; i++) {
+    for (int i = 0; i < n; i++) {
       final ChordSpec chord = progression[i];
       final Set<int> corePcs = _corePitchClasses(chord);
+      final int rel = (chord.normalizedRootPc - tonicPc + 12) % 12;
 
       if (scalePcs.containsAll(corePcs)) {
         score += 3.0;
@@ -91,54 +95,178 @@ class HarmonicAnalyzer {
         if (_matchesDiatonicTriad(chord, tonicPc, mode)) {
           score += 1.0;
         }
-      } else if (mode == ScaleMode.aeolian &&
+        // Unique diatonic V7 in Major (Ionian) strongly anchors the tonal center.
+        if (isIonian &&
+            rel == 7 &&
+            chord.triad == TriadQuality.major &&
+            chord.seventh == SeventhQuality.dominant7) {
+          score += 1.8;
+        }
+      } else if (!isIonian &&
           _isHarmonicMinorDominantOrLeading(chord, tonicPc)) {
-        score += 2.2;
+        score += 2.6;
       } else {
         // Partial pitch-class overlap still provides a weak clue.
         final int shared =
             corePcs.where((int pc) => scalePcs.contains(pc)).length;
         score += shared * 0.25;
+
+        // Secondary dominant resolving down a fifth (up 5 semitones) to a non-tonic degree.
+        final bool isDomStructure = (chord.triad == TriadQuality.major ||
+                chord.triad == TriadQuality.sus4) &&
+            (chord.seventh == SeventhQuality.none ||
+                chord.seventh == SeventhQuality.dominant7);
+        if (isDomStructure) {
+          final int targetRel = (rel + 5) % 12;
+          if (targetRel != 0 && modeIntervals.contains(targetRel)) {
+            final ChordSpec nextCyclic = progression[(i + 1) % n];
+            if ((nextCyclic.normalizedRootPc - tonicPc + 12) % 12 ==
+                targetRel) {
+              score += 1.6;
+            }
+          }
+        }
       }
 
-      // Cadential transitions (V -> I/i and ii/IV -> V)
-      if (i < progression.length - 1) {
+      // Sequential harmonic transitions.
+      if (i < n - 1) {
         final ChordSpec next = progression[i + 1];
-        final int relCur = (chord.normalizedRootPc - tonicPc + 12) % 12;
+        final int relCur = rel;
         final int relNext = (next.normalizedRootPc - tonicPc + 12) % 12;
         final bool curHasMajor3rd =
             chord.intervals.contains(4) || chord.triad == TriadQuality.sus4;
+        final bool curIsTonic = _tonicMatchesModeQuality(chord, mode);
+        final bool nextIsTonic = _tonicMatchesModeQuality(next, mode);
 
         if (relCur == 7 && curHasMajor3rd && relNext == 0) {
-          score += 4.0;
+          score += nextIsTonic ? 4.2 : 1.5;
         } else if ((relCur == 2 || relCur == 5) && relNext == 7) {
-          score += 2.2;
+          if (!isIonian ||
+              next.triad == TriadQuality.major ||
+              next.triad == TriadQuality.sus4) {
+            score += 2.2;
+          }
+        } else if (relCur == 5 && relNext == 0 && nextIsTonic) {
+          score += 1.2;
+        } else if (isIonian &&
+            relCur == 0 &&
+            curIsTonic &&
+            relNext == 7 &&
+            (next.triad == TriadQuality.major ||
+                next.triad == TriadQuality.sus4)) {
+          score += 1.0;
+        } else if (isIonian &&
+            relCur == 7 &&
+            curHasMajor3rd &&
+            (relNext == 9 || relNext == 4)) {
+          score += 1.5;
+        } else if (isIonian &&
+            relCur == 4 &&
+            relNext == 9 &&
+            chord.triad == TriadQuality.minor &&
+            next.triad == TriadQuality.minor) {
+          score += 0.9;
+        } else if (!isIonian &&
+            relCur == 10 &&
+            chord.triad == TriadQuality.major &&
+            chord.seventh != SeventhQuality.dominant7 &&
+            relNext == 0 &&
+            nextIsTonic) {
+          score += 0.8;
         }
       }
     }
 
-    // First and final chord tonic anchors.
-    if (progression.first.normalizedRootPc == tonicPc) {
-      score += 2.0;
-      if (_tonicMatchesModeQuality(progression.first, mode)) {
-        score += 1.2;
+    // Cyclic turnaround wrap-around check (V -> I/i or Aeolian bVII -> i).
+    if (n >= 3) {
+      final ChordSpec last = progression.last;
+      final ChordSpec first = progression.first;
+      final int relLast = (last.normalizedRootPc - tonicPc + 12) % 12;
+      final int relFirst = (first.normalizedRootPc - tonicPc + 12) % 12;
+      final bool lastHasMajor3rd =
+          last.intervals.contains(4) || last.triad == TriadQuality.sus4;
+      final bool firstIsTonic = _tonicMatchesModeQuality(first, mode);
+
+      if (relLast == 7 && lastHasMajor3rd && relFirst == 0 && firstIsTonic) {
+        score += 2.0;
+      } else if (!isIonian &&
+          relLast == 10 &&
+          last.triad == TriadQuality.major &&
+          last.seventh != SeventhQuality.dominant7 &&
+          relFirst == 0 &&
+          firstIsTonic) {
+        score += 1.4;
       }
     }
-    if (progression.last.normalizedRootPc == tonicPc) {
-      score += 2.5;
-      if (_tonicMatchesModeQuality(progression.last, mode)) {
-        score += 1.5;
-      }
+
+    // Marusa ("Just the Two of Us") IVmaj -> iii7/III7 -> vi7 -> v7/I7 parent Major anchor.
+    if (isIonian && _isMarusaParentMajor(progression, tonicPc)) {
+      score += 14.0;
+    }
+
+    // Mild first and final chord tonic anchors (dominant 7ths excluded from Ionian tonic).
+    if (progression.first.normalizedRootPc == tonicPc &&
+        _tonicMatchesModeQuality(progression.first, mode)) {
+      score += 1.6;
+    }
+    if (progression.last.normalizedRootPc == tonicPc &&
+        _tonicMatchesModeQuality(progression.last, mode)) {
+      score += 2.6;
     }
 
     return score;
   }
 
+  static bool _isMarusaParentMajor(
+    List<ChordSpec> progression,
+    int tonicPc,
+  ) {
+    bool hasIvMaj = false;
+    bool hasIii = false;
+    bool hasViMin = false;
+    bool hasVMinOrITurn = false;
+    bool hasIiiToVi = false;
+
+    for (int i = 0; i < progression.length; i++) {
+      final ChordSpec c = progression[i];
+      final int rel = (c.normalizedRootPc - tonicPc + 12) % 12;
+      final bool isMajLike = c.triad == TriadQuality.major &&
+          c.seventh != SeventhQuality.dominant7;
+      final bool isDom7 = c.triad == TriadQuality.major &&
+          c.seventh == SeventhQuality.dominant7;
+      final bool isMinLike = c.triad == TriadQuality.minor;
+
+      if (rel == 5 && isMajLike) {
+        hasIvMaj = true;
+      } else if (rel == 4 && (isMinLike || isDom7)) {
+        hasIii = true;
+      } else if (rel == 9 && isMinLike) {
+        hasViMin = true;
+      } else if ((rel == 7 && isMinLike) || (rel == 0 && isDom7)) {
+        hasVMinOrITurn = true;
+      }
+
+      if (i < progression.length - 1) {
+        final ChordSpec next = progression[i + 1];
+        final int nextRel = (next.normalizedRootPc - tonicPc + 12) % 12;
+        if (rel == 4 &&
+            (isMinLike || isDom7) &&
+            nextRel == 9 &&
+            next.triad == TriadQuality.minor) {
+          hasIiiToVi = true;
+        }
+      }
+    }
+
+    return hasIvMaj && hasIii && hasViMin && hasVMinOrITurn && hasIiiToVi;
+  }
+
   static bool _tonicMatchesModeQuality(ChordSpec chord, ScaleMode mode) {
     if (mode == ScaleMode.ionian) {
-      return chord.triad == TriadQuality.major ||
-          chord.triad == TriadQuality.sus2 ||
-          chord.triad == TriadQuality.sus4;
+      return (chord.triad == TriadQuality.major ||
+              chord.triad == TriadQuality.sus2 ||
+              chord.triad == TriadQuality.sus4) &&
+          chord.seventh != SeventhQuality.dominant7;
     }
     return chord.triad == TriadQuality.minor;
   }

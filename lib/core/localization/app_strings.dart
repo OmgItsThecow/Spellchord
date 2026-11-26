@@ -125,7 +125,9 @@ class AppStrings {
             ? 'Bossa Nova (Fmaj7–G9–Gm7–C13)'
             : 'Bossa Nova Turnaround (Fmaj7–G9–Gm7–C13)';
       case 'ii-V-I + Sec Dom':
-        return isEs ? 'Jazz ii-V-I + Dom. Sec.' : 'ii-V-I + Sec Dom';
+        return isEs
+            ? 'Jazz ii-V-I + Dom. Sec. (Dm9–G13–Cmaj9–A7b9)'
+            : 'ii-V-I + Sec Dom (Dm9–G13–Cmaj9–A7b9)';
       case 'Modal Interchange':
         return isEs ? 'Intercambio Modal (bVI–bVII–iv)' : 'Modal Interchange';
       case 'Diminished Passing':
