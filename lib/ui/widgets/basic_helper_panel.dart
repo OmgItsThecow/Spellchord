@@ -32,6 +32,8 @@ class BasicHelperPanel extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    final bool isPiano = controller.visualizerMode == VisualizerMode.piano;
+    final Color primaryAccent = AppDarkTheme.accentFor(isPiano: isPiano);
     final String bassName =
         MidiPitch.pitchClassName(voicing.bassPc, preferFlat: preferFlat);
     final List<BorrowedChordSuggestion> suggestions =
@@ -58,10 +60,10 @@ class BasicHelperPanel extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  const Icon(
+                  Icon(
                     Icons.tune_rounded,
                     size: 15,
-                    color: AppDarkTheme.tonicColor,
+                    color: primaryAccent,
                   ),
                   const SizedBox(width: 6),
                   Text(
@@ -127,21 +129,19 @@ class BasicHelperPanel extends StatelessWidget {
                           vertical: 5,
                         ),
                         decoration: BoxDecoration(
-                          color:
-                              AppDarkTheme.tonicColor.withValues(alpha: 0.14),
+                          color: primaryAccent.withValues(alpha: 0.14),
                           borderRadius: BorderRadius.circular(7),
                           border: Border.all(
-                            color:
-                                AppDarkTheme.tonicColor.withValues(alpha: 0.4),
+                            color: primaryAccent.withValues(alpha: 0.4),
                           ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: <Widget>[
-                            const Icon(
+                            Icon(
                               Icons.auto_fix_high_rounded,
                               size: 13,
-                              color: AppDarkTheme.tonicColor,
+                              color: primaryAccent,
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -149,8 +149,8 @@ class BasicHelperPanel extends StatelessWidget {
                                 controller.totalProgressionSemitoneCost,
                                 isBasic: true,
                               ),
-                              style: const TextStyle(
-                                color: AppDarkTheme.tonicColor,
+                              style: TextStyle(
+                                color: primaryAccent,
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w700,
                               ),

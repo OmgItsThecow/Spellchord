@@ -31,8 +31,8 @@ class ExplorerController extends ChangeNotifier {
     bool enableAudio = true,
   })  : _enableAudio = enableAudio,
         _audioPlayer = enableAudio ? ChordAudioPlayer() : null {
-    _progression = _buildPreset('Dream-Pop Nocturne');
-    _activePresetName = 'Dream-Pop Nocturne';
+    _progression = _buildPreset('Dream Pop');
+    _activePresetName = 'Dream Pop';
     _recompute();
     if (loadPersistedPresets) {
       _initUserPresets();
@@ -40,7 +40,7 @@ class ExplorerController extends ChangeNotifier {
   }
 
   static const List<String> presetNames = <String>[
-    'Dream-Pop Nocturne',
+    'Dream Pop',
     'Pop Anthem + Minor iv',
     '50s / Soul Turnaround',
     'Andalusian Cadence',
@@ -964,7 +964,7 @@ class ExplorerController extends ChangeNotifier {
           ChordSpec.major7(5, id: 'and_3'), // Fmaj7 (bVIΔ7)
           ChordSpec.dominant7(4, id: 'and_4'), // E7 (V7 Harmonic Minor)
         ];
-      case 'Dream-Pop Nocturne':
+      case 'Dream Pop':
         return <ChordSpec>[
           ChordSpec.major7(7, id: 'dpn_1'), // Gmaj7 (IVΔ7)
           ChordSpec.minor7(6, id: 'dpn_2'), // F#m7 (iii7)

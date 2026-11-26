@@ -27,6 +27,8 @@ class VoiceLeadingPanel extends StatelessWidget {
     final int selectedIndex = controller.selectedChordIndex;
     final bool preferFlat = controller.preferFlats;
     final bool isBasic = controller.isBasicMode;
+    final bool isPiano = controller.visualizerMode == VisualizerMode.piano;
+    final Color primaryAccent = AppDarkTheme.accentFor(isPiano: isPiano);
     final AppStrings strings = controller.strings;
 
     if (chord == null || voicing == null) {
@@ -59,10 +61,10 @@ class VoiceLeadingPanel extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  const Icon(
+                  Icon(
                     Icons.timeline_rounded,
                     size: 16,
-                    color: AppDarkTheme.tonicColor,
+                    color: primaryAccent,
                   ),
                   const SizedBox(width: 8),
                   Flexible(
@@ -140,7 +142,7 @@ class VoiceLeadingPanel extends StatelessWidget {
                       child: _TextBtn(
                         label: strings.autoOptimalLabel(isBasic: isBasic),
                         icon: Icons.auto_fix_high_rounded,
-                        accent: AppDarkTheme.tonicColor,
+                        accent: primaryAccent,
                         onTap: () =>
                             controller.setManualInversion(selectedIndex, null),
                       ),
@@ -213,13 +215,13 @@ class VoiceLeadingPanel extends StatelessWidget {
                             ),
                             decoration: BoxDecoration(
                               color: active
-                                  ? AppDarkTheme.tonicColor
+                                  ? primaryAccent
                                       .withValues(alpha: 0.14)
                                   : AppDarkTheme.bgWorkspace,
                               borderRadius: BorderRadius.circular(9),
                               border: Border.all(
                                 color: active
-                                    ? AppDarkTheme.tonicColor
+                                    ? primaryAccent
                                     : AppDarkTheme.borderSubtle,
                               ),
                             ),
@@ -234,7 +236,7 @@ class VoiceLeadingPanel extends StatelessWidget {
                                         invName,
                                         style: TextStyle(
                                           color: active
-                                              ? AppDarkTheme.tonicColor
+                                              ? primaryAccent
                                               : AppDarkTheme.textPrimary,
                                           fontSize: 13,
                                           fontWeight: FontWeight.w700,
@@ -316,13 +318,13 @@ class VoiceLeadingPanel extends StatelessWidget {
                                 ),
                                 decoration: BoxDecoration(
                                   color: active
-                                      ? AppDarkTheme.tonicColor
+                                      ? primaryAccent
                                           .withValues(alpha: 0.15)
                                       : AppDarkTheme.bgWorkspace,
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
                                     color: active
-                                        ? AppDarkTheme.tonicColor
+                                        ? primaryAccent
                                         : AppDarkTheme.borderSubtle,
                                   ),
                                 ),
@@ -333,7 +335,7 @@ class VoiceLeadingPanel extends StatelessWidget {
                                       '$invShort (/$bassName)',
                                       style: TextStyle(
                                         color: active
-                                            ? AppDarkTheme.tonicColor
+                                            ? primaryAccent
                                             : AppDarkTheme.textPrimary,
                                         fontSize: 12.5,
                                         fontWeight: FontWeight.w700,
@@ -372,7 +374,7 @@ class VoiceLeadingPanel extends StatelessWidget {
                             : strings.semitonesCount(
                                 voicing.totalSemitoneDistance,
                               ),
-                        color: AppDarkTheme.tonicColor,
+                        color: primaryAccent,
                       ),
                       _StatPill(
                         label: strings.commonTonesLabel,
@@ -414,7 +416,7 @@ class VoiceLeadingPanel extends StatelessWidget {
                         : motion.isCommonTone
                             ? AppDarkTheme.commonToneHighlight
                             : motion.isStepwise
-                                ? AppDarkTheme.tonicColor
+                                ? primaryAccent
                                 : AppDarkTheme.subdominantColor;
 
                     final String badgeText = motion.fromMidi == null

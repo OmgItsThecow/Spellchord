@@ -140,7 +140,10 @@ class ProgressionTimeline extends StatelessWidget {
                     child: _ActionPill(
                       icon: Icons.add_rounded,
                       label: strings.addChordLabel,
-                      accent: AppDarkTheme.tonicColor,
+                      accent: AppDarkTheme.accentFor(
+                        isPiano:
+                            controller.visualizerMode == VisualizerMode.piano,
+                      ),
                       onTap: () async {
                         final ChordSpec? created = await showChordBuilderDialog(
                           context: context,
@@ -274,7 +277,10 @@ class _ChordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color accent = AppDarkTheme.colorForCategory(analysis.category);
+    final bool isPiano = controller.visualizerMode == VisualizerMode.piano;
+    final Color accent =
+        AppDarkTheme.colorForCategory(analysis.category, isPiano: isPiano);
+    final Color upperNoteColor = AppDarkTheme.accentFor(isPiano: isPiano);
     final bool isManualInv = chord.manualInversion != null;
     final String displaySymbol = chord.symbol(
       preferFlat: preferFlat,
@@ -447,7 +453,7 @@ class _ChordCard extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: (i == 0
                                 ? AppDarkTheme.rootNoteHighlight
-                                : AppDarkTheme.upperNoteHighlight)
+                                : upperNoteColor)
                             .withValues(alpha: 0.14),
                         borderRadius: BorderRadius.circular(4),
                       ),
@@ -465,7 +471,7 @@ class _ChordCard extends StatelessWidget {
                         style: TextStyle(
                           color: i == 0
                               ? AppDarkTheme.rootNoteHighlight
-                              : AppDarkTheme.upperNoteHighlight,
+                              : upperNoteColor,
                           fontSize: isCompact
                               ? (isBasicMode ? 10.5 : 10.0)
                               : (isBasicMode ? 11.5 : 10.5),

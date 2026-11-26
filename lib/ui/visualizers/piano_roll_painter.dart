@@ -364,7 +364,7 @@ class PianoKeyboardPainter extends CustomPainter {
       if (isBassOrRoot) {
         fillColor = AppDarkTheme.rootNoteHighlight.withValues(alpha: 0.90);
       } else if (isActive) {
-        fillColor = AppDarkTheme.upperNoteHighlight.withValues(alpha: 0.85);
+        fillColor = AppDarkTheme.pelicanPink.withValues(alpha: 0.85);
       } else {
         fillColor = const Color(0xFF23232C);
       }
@@ -436,7 +436,7 @@ class PianoKeyboardPainter extends CustomPainter {
       if (isBassOrRoot) {
         fillColor = AppDarkTheme.rootNoteHighlight;
       } else if (isActive) {
-        fillColor = AppDarkTheme.upperNoteHighlight;
+        fillColor = AppDarkTheme.pelicanPink;
       } else {
         fillColor = const Color(0xFF0E0E13);
       }
@@ -479,7 +479,7 @@ class PianoKeyboardPainter extends CustomPainter {
         final Color lineColor = m.isCommonTone
             ? AppDarkTheme.commonToneHighlight
             : m.isStepwise
-                ? AppDarkTheme.tonicColor
+                ? AppDarkTheme.pelicanPink
                 : AppDarkTheme.subdominantColor;
 
         if (m.isCommonTone) {

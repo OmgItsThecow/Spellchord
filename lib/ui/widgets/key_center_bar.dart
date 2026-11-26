@@ -101,7 +101,10 @@ class KeyCenterBar extends StatelessWidget {
                       child: _ModeSwitchPill(
                         label: strings.basicModeLabel,
                         selected: isBasic,
-                        accent: AppDarkTheme.tonicColor,
+                        accent: AppDarkTheme.accentFor(
+                          isPiano:
+                              controller.visualizerMode == VisualizerMode.piano,
+                        ),
                         onTap: () =>
                             controller.setComplexityMode(ComplexityMode.basic),
                       ),
@@ -172,12 +175,18 @@ class KeyCenterBar extends StatelessWidget {
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 6.5),
                     decoration: BoxDecoration(
                       color: controller.soundEnabled
-                          ? AppDarkTheme.tonicColor.withValues(alpha: 0.14)
+                          ? AppDarkTheme.accentFor(
+                              isPiano: controller.visualizerMode ==
+                                  VisualizerMode.piano,
+                            ).withValues(alpha: 0.14)
                           : AppDarkTheme.cardSurface,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: controller.soundEnabled
-                            ? AppDarkTheme.tonicColor.withValues(alpha: 0.45)
+                            ? AppDarkTheme.accentFor(
+                                isPiano: controller.visualizerMode ==
+                                    VisualizerMode.piano,
+                              ).withValues(alpha: 0.45)
                             : AppDarkTheme.borderSubtle,
                       ),
                     ),
@@ -187,7 +196,10 @@ class KeyCenterBar extends StatelessWidget {
                           : Icons.volume_off_rounded,
                       size: 15,
                       color: controller.soundEnabled
-                          ? AppDarkTheme.tonicColor
+                          ? AppDarkTheme.accentFor(
+                              isPiano: controller.visualizerMode ==
+                                  VisualizerMode.piano,
+                            )
                           : AppDarkTheme.textMuted,
                     ),
                   ),
@@ -218,7 +230,10 @@ class KeyCenterBar extends StatelessWidget {
                       style: TextStyle(
                         color: isLocked
                             ? AppDarkTheme.subdominantColor
-                            : AppDarkTheme.tonicColor,
+                            : AppDarkTheme.accentFor(
+                                isPiano: controller.visualizerMode ==
+                                    VisualizerMode.piano,
+                              ),
                         fontSize: 10.5,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.7,
@@ -456,20 +471,28 @@ class KeyCenterBar extends StatelessWidget {
                         vertical: 7,
                       ),
                       decoration: BoxDecoration(
-                        color: AppDarkTheme.tonicColor.withValues(alpha: 0.12),
+                        color: AppDarkTheme.accentFor(
+                          isPiano:
+                              controller.visualizerMode == VisualizerMode.piano,
+                        ).withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color:
-                              AppDarkTheme.tonicColor.withValues(alpha: 0.35),
+                          color: AppDarkTheme.accentFor(
+                            isPiano: controller.visualizerMode ==
+                                VisualizerMode.piano,
+                          ).withValues(alpha: 0.35),
                         ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
-                          const Icon(
+                          Icon(
                             Icons.auto_fix_high_rounded,
                             size: 14,
-                            color: AppDarkTheme.tonicColor,
+                            color: AppDarkTheme.accentFor(
+                              isPiano: controller.visualizerMode ==
+                                  VisualizerMode.piano,
+                            ),
                           ),
                           const SizedBox(width: 6),
                           Text(
@@ -477,8 +500,11 @@ class KeyCenterBar extends StatelessWidget {
                               controller.totalProgressionSemitoneCost,
                               isBasic: isBasic,
                             ),
-                            style: const TextStyle(
-                              color: AppDarkTheme.tonicColor,
+                            style: TextStyle(
+                              color: AppDarkTheme.accentFor(
+                                isPiano: controller.visualizerMode ==
+                                    VisualizerMode.piano,
+                              ),
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),

@@ -74,6 +74,7 @@ class VisualizerContainer extends StatelessWidget {
                           icon: Icons.piano_rounded,
                           label: strings.pianoModeLabel,
                           selected: isPiano,
+                          accent: AppDarkTheme.pelicanPink,
                           onTap: () =>
                               controller.setVisualizerMode(VisualizerMode.piano),
                         ),
@@ -86,6 +87,7 @@ class VisualizerContainer extends StatelessWidget {
                           icon: Icons.grid_on_rounded,
                           label: strings.guitarModeLabel,
                           selected: !isPiano,
+                          accent: AppDarkTheme.tonicColor,
                           onTap: () => controller
                               .setVisualizerMode(VisualizerMode.guitar),
                         ),
@@ -95,7 +97,7 @@ class VisualizerContainer extends StatelessWidget {
                 ),
               ),
 
-              // Active chord & note / MIDI pitch readout
+              // Active chord & note readout
               if (chord != null && activeMidi.isNotEmpty)
                 Wrap(
                   spacing: 8,
@@ -144,7 +146,7 @@ class VisualizerContainer extends StatelessWidget {
                     label: strings.bassRootLegend,
                   ),
                   _LegendDot(
-                    color: AppDarkTheme.upperNoteHighlight,
+                    color: AppDarkTheme.accentFor(isPiano: isPiano),
                     label: strings.upperTonesLegend,
                   ),
                   _LegendDot(
@@ -174,12 +176,14 @@ class _ModeTab extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.selected,
+    required this.accent,
     required this.onTap,
   });
 
   final IconData icon;
   final String label;
   final bool selected;
+  final Color accent;
   final VoidCallback onTap;
 
   @override
@@ -191,14 +195,10 @@ class _ModeTab extends StatelessWidget {
         duration: const Duration(milliseconds: 140),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: selected
-              ? AppDarkTheme.tonicColor.withValues(alpha: 0.18)
-              : Colors.transparent,
+          color: selected ? accent.withValues(alpha: 0.18) : Colors.transparent,
           borderRadius: BorderRadius.circular(7),
           border: Border.all(
-            color: selected
-                ? AppDarkTheme.tonicColor.withValues(alpha: 0.55)
-                : Colors.transparent,
+            color: selected ? accent.withValues(alpha: 0.55) : Colors.transparent,
           ),
         ),
         child: Row(
@@ -207,17 +207,13 @@ class _ModeTab extends StatelessWidget {
             Icon(
               icon,
               size: 15,
-              color: selected
-                  ? AppDarkTheme.tonicColor
-                  : AppDarkTheme.textSecondary,
+              color: selected ? accent : AppDarkTheme.textSecondary,
             ),
             const SizedBox(width: 6),
             Text(
               label,
               style: TextStyle(
-                color: selected
-                    ? AppDarkTheme.tonicColor
-                    : AppDarkTheme.textSecondary,
+                color: selected ? accent : AppDarkTheme.textSecondary,
                 fontSize: 12,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
               ),

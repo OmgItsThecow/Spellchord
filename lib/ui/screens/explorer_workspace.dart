@@ -231,7 +231,10 @@ class _ExplorerWorkspaceState extends State<ExplorerWorkspace> {
                   child: _TabPill(
                     label: widget.controller.strings.voiceLeadingTab,
                     selected: safeNarrowTab == 0,
-                    accent: AppDarkTheme.tonicColor,
+                    accent: AppDarkTheme.accentFor(
+                      isPiano: widget.controller.visualizerMode ==
+                          VisualizerMode.piano,
+                    ),
                     onTap: () => setState(() => _narrowPanelTab = 0),
                   ),
                 ),

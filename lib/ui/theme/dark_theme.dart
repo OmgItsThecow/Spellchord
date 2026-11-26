@@ -19,6 +19,7 @@ class AppDarkTheme {
 
   // Muted harmonic function accents
   static const Color tonicColor = Color(0xFF4FD1C5);
+  static const Color pelicanPink = Color(0xFFF28BA8);
   static const Color subdominantColor = Color(0xFFF6AD55);
   static const Color dominantColor = Color(0xFFFC8181);
   static const Color secondaryDomColor = Color(0xFFB794F4);
@@ -31,10 +32,17 @@ class AppDarkTheme {
   static const Color upperNoteHighlight = Color(0xFF4FD1C5);
   static const Color commonToneHighlight = Color(0xFF68D391);
 
-  static Color colorForCategory(HarmonicCategory category) {
+  /// Primary UI accent: Pelican Pink in Piano Mode, Teal in Guitar Mode.
+  static Color accentFor({required bool isPiano}) =>
+      isPiano ? pelicanPink : tonicColor;
+
+  static Color colorForCategory(
+    HarmonicCategory category, {
+    bool isPiano = false,
+  }) {
     switch (category) {
       case HarmonicCategory.tonic:
-        return tonicColor;
+        return accentFor(isPiano: isPiano);
       case HarmonicCategory.subdominant:
         return subdominantColor;
       case HarmonicCategory.dominant:

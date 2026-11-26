@@ -184,7 +184,7 @@ void main() {
           mode: ScaleMode.ionian,
           firstRoman: 'IVΔ7',
         ),
-        'Dream-Pop Nocturne': (
+        'Dream Pop': (
           tonic: 2,
           mode: ScaleMode.ionian,
           firstRoman: 'IVΔ7',
@@ -285,7 +285,7 @@ void main() {
 
       // Default preset is Dream-Pop Nocturne in D Major:
       // Gmaj7 (IVΔ7), F#m7 (iii7), Em7 (ii7), Dmaj7 (IΔ7)
-      expect(controller.activePresetName, 'Dream-Pop Nocturne');
+      expect(controller.activePresetName, 'Dream Pop');
       expect(controller.activeKeyTonicPc, 2);
       expect(controller.activeKeyMode, ScaleMode.ionian);
       expect(
