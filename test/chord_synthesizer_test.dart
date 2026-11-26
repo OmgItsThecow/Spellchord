@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:harmonic_explorer/core/audio/chord_synthesizer.dart';
+import 'package:harmonic_explorer/core/audio/guitar_sample_bank.dart';
 import 'package:harmonic_explorer/state/explorer_controller.dart';
 
 void main() {
@@ -71,6 +73,32 @@ void main() {
       final double sustainRms = sumSq > 0 ? (sumSq / count) : 0.0;
       // Sustain region should carry substantial musical energy (RMS > 0.12).
       expect(sustainRms, greaterThan(0.12 * 0.12));
+    });
+
+    test('decodes all bundled electric guitar multisamples and renders dream-pop chord', () {
+      final Map<int, Float64List> bank = <int, Float64List>{};
+      for (final MapEntry<int, String> entry
+          in GuitarSampleBank.sampleAssets.entries) {
+        final File file = File(entry.value);
+        expect(file.existsSync(), isTrue, reason: 'Missing ${entry.value}');
+        final Float64List decoded =
+            GuitarSampleBank.decodeWavPcm16(file.readAsBytesSync());
+        expect(decoded.length, greaterThan(10000));
+        bank[entry.key] = decoded;
+      }
+
+      expect(GuitarSampleBank.nearestBaseMidi(42, bank.keys), 40);
+      expect(GuitarSampleBank.nearestBaseMidi(58, bank.keys), 56);
+      expect(GuitarSampleBank.nearestBaseMidi(65, bank.keys), 64);
+
+      final Uint8List wav = ChordSynthesizer.synthesizeChordWav(
+        midiNotes: const <int>[48, 55, 59, 64, 67],
+        instrument: SynthInstrument.guitar,
+        guitarSamples: bank,
+      );
+      expect(wav.length, greaterThan(44 + 40000 * 2));
+      expect(String.fromCharCodes(wav.sublist(0, 4)), 'RIFF');
+      expect(String.fromCharCodes(wav.sublist(8, 12)), 'WAVE');
     });
   });
 

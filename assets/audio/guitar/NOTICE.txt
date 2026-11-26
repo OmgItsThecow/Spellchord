@@ -1,0 +1,9 @@
+Electric Guitar Multisamples Attribution
+========================================
+
+The WAV samples in this directory (E2, Ab2, C3, E3, Ab3, C4, E4, Ab4, C5, E5)
+are derived from the FluidR3_GM SoundFont (`electric_guitar_jazz`) as
+distributed in gleitz/midi-js-soundfonts under the MIT License.
+
+Original SoundFont: FluidR3_GM by Frank Wen (MIT License).
+Converted to 22,050 Hz 16-bit mono PCM WAV for in-app playback.
