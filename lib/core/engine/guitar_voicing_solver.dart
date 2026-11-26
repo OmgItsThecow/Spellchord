@@ -288,7 +288,19 @@ class GuitarVoicingSolver {
       candidates.sort((GuitarVoicing a, GuitarVoicing b) {
         return a.score.compareTo(b.score);
       });
-      return candidates.first;
+      final Set<String> seenPatterns = <String>{};
+      final List<GuitarVoicing> uniqueCandidates = <GuitarVoicing>[];
+      for (final GuitarVoicing c in candidates) {
+        final String sig = c.stringNotes
+            .map((GuitarFretNote n) => n.fret?.toString() ?? 'x')
+            .join('-');
+        if (seenPatterns.add(sig)) {
+          uniqueCandidates.add(c);
+        }
+      }
+      final int variantIdx =
+          chord.voicingVariantIndex % uniqueCandidates.length;
+      return uniqueCandidates[variantIdx];
     }
 
     // Graceful fallback when fewer than 3 strings are enabled or custom tuning
@@ -326,7 +338,7 @@ class GuitarVoicingSolver {
       // Establish permissible fret window anchored near bassFret.
       final int minWindow = bassFret == 0 ? 1 : (bassFret - 3).clamp(1, maxFretNumber);
       final int maxWindow =
-          bassFret == 0 ? 4 : (bassFret + maxPlayableFretSpan).clamp(1, maxFretNumber);
+          bassFret == 0 ? 2 : (bassFret + maxPlayableFretSpan).clamp(1, maxFretNumber);
 
       for (int wStart = minWindow; wStart <= maxWindow; wStart++) {
         final int wEnd = (wStart + maxPlayableFretSpan - 1).clamp(wStart, maxFretNumber);
@@ -436,21 +448,39 @@ class GuitarVoicingSolver {
         }
 
         final List<int> sortedMidi = List<int>.from(soundedMidi)..sort();
-        final double vlCost = VoiceLeadingEngine.evaluateTransition(
+        final double rawVlCost = VoiceLeadingEngine.evaluateTransition(
           previousGuitarMidi,
           sortedMidi,
         ).cost;
+        final double vlWeight = chord.manualInversion != null ? 0.15 : 0.65;
+        final double vlCost = rawVlCost * vlWeight;
 
         final int fretSpan =
             maxPositiveFret == 0 ? 0 : (maxPositiveFret - minPositiveFret);
-        final double positionBias = maxPositiveFret * 0.25;
-        final double spanPenalty = fretSpan * 0.6;
+        final bool hasOpenBass = currentFrets.first == 0;
+        final bool hasOpenStrings = currentFrets.any((int f) => f == 0);
+        final double positionBias = maxPositiveFret * 0.40;
+        final double highFretPenalty =
+            maxPositiveFret > 7 ? (maxPositiveFret - 7) * 1.5 : 0.0;
+        final double openBonus = (hasOpenBass && maxPositiveFret <= 4
+                ? -2.8
+                : 0.0) +
+            (hasOpenStrings && maxPositiveFret <= 4 ? -1.4 : 0.0) +
+            (hasOpenStrings && maxPositiveFret > 4
+                ? (maxPositiveFret - 4) * 1.2
+                : 0.0);
+        final double spanPenalty = fretSpan * 0.7;
         final double utilizationBonus = -subStrings.length * 0.35;
         final double invBias =
             previousGuitarMidi == null && inversionIndex > 0 ? 1.2 : 0.0;
 
-        final double totalScore =
-            vlCost + positionBias + spanPenalty + utilizationBonus + invBias;
+        final double totalScore = vlCost +
+            positionBias +
+            highFretPenalty +
+            openBonus +
+            spanPenalty +
+            utilizationBonus +
+            invBias;
 
         final Map<int, int> fretByString = <int, int>{
           for (int i = 0; i < subStrings.length; i++)

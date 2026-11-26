@@ -66,5 +66,27 @@ void main() {
         expect(note.fret, isNull);
       }
     });
+
+    test('prefers open Dmaj7 (0-2-2-2) over fret 12 when switching duplicated Dmaj7/A to root position on top 4 strings', () {
+      final ChordSpec dmaj7OverA = ChordSpec.major7(
+        2,
+        id: 'dmaj7_a',
+      ).copyWith(manualInversion: 2); // Dmaj7/A
+      final ChordSpec dmaj7Root = ChordSpec.major7(
+        2,
+        id: 'dmaj7_root',
+      ).copyWith(manualInversion: 0); // Dmaj7
+
+      final List<GuitarVoicing> solved = GuitarVoicingSolver.solveProgression(
+        progression: <ChordSpec>[dmaj7OverA, dmaj7Root],
+        openStringMidi: GuitarTuningPreset.standard.openStringMidi,
+        stringMask: GuitarStringMaskPreset.topFour.mask,
+      );
+
+      final GuitarVoicing rootVoicing = solved[1];
+      // D string (index 2) should be open (fret 0), and top frets at 2 (0-2-2-2)
+      expect(rootVoicing.stringNotes[2].fret, 0);
+      expect(rootVoicing.maxFret, lessThanOrEqualTo(4));
+    });
   });
 }
