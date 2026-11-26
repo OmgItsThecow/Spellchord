@@ -96,9 +96,9 @@ class ChordSynthesizer {
     List<int> notes,
     Map<int, Float64List> sampleBank,
   ) {
-    const double durationSec = 2.20;
+    const double durationSec = 2.40;
     final int totalSamples = (sampleRate * durationSec).round();
-    const int tailFadeSamples = 1764; // ~80 ms smooth fade-out
+    const int tailFadeSamples = 2205; // ~100 ms smooth fade-out
 
     final Float64List dryMix = sampleBank.isNotEmpty
         ? _mixSampledGuitar(notes, sampleBank, totalSamples)
@@ -115,8 +115,8 @@ class ChordSynthesizer {
     int totalSamples,
   ) {
     final Float64List mix = Float64List(totalSamples);
-    const double strumStepSec = 0.011; // Gentle 11 ms per-string strum
-    const int attackSamples = 66; // ~3 ms soft de-click attack
+    const double strumStepSec = 0.028; // Relaxed 28 ms per-string dreamy strum
+    const int attackSamples = 110; // ~5 ms soft bloom attack
     final int lastIdx = math.max(1, notes.length - 1);
     final Iterable<int> availableMidi = sampleBank.keys;
 
@@ -130,10 +130,11 @@ class ChordSynthesizer {
         continue;
       }
 
-      final double pitchRatio = math.pow(2.0, (targetMidi - baseMidi) / 12.0).toDouble();
+      final double pitchRatio =
+          math.pow(2.0, (targetMidi - baseMidi) / 12.0).toDouble();
       final int startSample = (nIdx * strumStepSec * sampleRate).round();
-      // Gently balance bass vs. upper strings so chord color tones shine.
-      final double stringGain = 0.86 + 0.14 * (nIdx / lastIdx);
+      // Gently tame highest strings so treble never pierces above chord warmth.
+      final double stringGain = 1.0 - 0.12 * (nIdx / lastIdx);
 
       double srcPos = 0.0;
       for (int i = startSample; i < totalSamples; i++) {
@@ -244,11 +245,11 @@ class ChordSynthesizer {
     double hpPrevIn = 0.0;
     double hpPrevOut = 0.0;
 
-    // 2-pole Biquad LPF @ 3200 Hz, Q = 0.72 (warm neck-pickup roll-off)
-    const double w0 = 2.0 * math.pi * 3200.0 / sampleRate;
+    // 2-pole Biquad LPF @ 1750 Hz, Q = 0.65 (warm rolled-back tone knob)
+    const double w0 = 2.0 * math.pi * 1750.0 / sampleRate;
     final double cosW0 = math.cos(w0);
     final double sinW0 = math.sin(w0);
-    final double alpha = sinW0 / (2.0 * 0.72);
+    final double alpha = sinW0 / (2.0 * 0.65);
     final double b0 = ((1.0 - cosW0) * 0.5) / (1.0 + alpha);
     final double b1 = (1.0 - cosW0) / (1.0 + alpha);
     final double b2 = b0;
@@ -256,9 +257,9 @@ class ChordSynthesizer {
     final double a2 = (1.0 - alpha) / (1.0 + alpha);
     double x1 = 0.0, x2 = 0.0, y1 = 0.0, y2 = 0.0;
 
-    final double tanhNorm = _tanh(1.2);
+    final double tanhNorm = _tanh(1.15);
     for (int i = 0; i < n; i++) {
-      final double driven = _tanh(input[i] * dryScale * 1.2) / tanhNorm;
+      final double driven = _tanh(input[i] * dryScale * 1.15) / tanhNorm;
       final double hp = hpAlpha * (hpPrevOut + driven - hpPrevIn);
       hpPrevIn = driven;
       hpPrevOut = hp;
@@ -271,26 +272,26 @@ class ChordSynthesizer {
       filtered[i] = lp;
     }
 
-    // --- 3. 4-Stage Analog Phaser (0.38 Hz LFO, 380–1450 Hz) ---
+    // --- 3. 4-Stage Analog Phaser (0.34 Hz LFO, warm 240–920 Hz sweep) ---
     final Float64List phased = Float64List(n);
     final Float64List apZ = Float64List(4);
     double phaserFeedback = 0.0;
-    const double phaserRate = 2.0 * math.pi * 0.38 / sampleRate;
+    const double phaserRate = 2.0 * math.pi * 0.34 / sampleRate;
 
     for (int i = 0; i < n; i++) {
       final double lfo = 0.5 * (1.0 + math.sin(i * phaserRate + 0.4));
-      final double sweepHz = 380.0 + lfo * 1070.0;
+      final double sweepHz = 240.0 + lfo * 680.0;
       final double t = math.tan(math.pi * sweepHz / sampleRate);
       final double coeff = (t - 1.0) / (t + 1.0);
 
-      double sig = filtered[i] + phaserFeedback * 0.28;
+      double sig = filtered[i] + phaserFeedback * 0.24;
       for (int s = 0; s < 4; s++) {
         final double y = coeff * sig + apZ[s];
         apZ[s] = sig - coeff * y;
         sig = y;
       }
       phaserFeedback = sig;
-      phased[i] = filtered[i] * 0.76 + sig * 0.26;
+      phased[i] = filtered[i] * 0.78 + sig * 0.24;
     }
 
     // --- 4. Lush Chorus + Subtle Flanger (Dual Modulated Delay Lines) ---
@@ -300,13 +301,13 @@ class ChordSynthesizer {
     final Float64List flangerBuf = Float64List(modBufLen);
     int modWrite = 0;
 
-    const double chorusBase = 0.0135 * sampleRate; // 13.5 ms
-    const double chorusDepth = 0.0038 * sampleRate; // ±3.8 ms
-    const double chorusRate = 2.0 * math.pi * 0.55 / sampleRate;
+    const double chorusBase = 0.014 * sampleRate; // 14 ms
+    const double chorusDepth = 0.0036 * sampleRate; // ±3.6 ms
+    const double chorusRate = 2.0 * math.pi * 0.52 / sampleRate;
 
-    const double flangerBase = 0.0052 * sampleRate; // 5.2 ms
-    const double flangerDepth = 0.0018 * sampleRate; // ±1.8 ms
-    const double flangerRate = 2.0 * math.pi * 0.29 / sampleRate;
+    const double flangerBase = 0.0055 * sampleRate; // 5.5 ms
+    const double flangerDepth = 0.0016 * sampleRate; // ±1.6 ms
+    const double flangerRate = 2.0 * math.pi * 0.26 / sampleRate;
 
     for (int i = 0; i < n; i++) {
       final double x = phased[i];
@@ -317,22 +318,22 @@ class ChordSynthesizer {
       final double cReadPos = modWrite - cDelay;
       final double cSample = _readCircularLinear(chorusBuf, cReadPos, modBufLen);
 
-      // Interpolated Flanger tap with gentle feedback
+      // Interpolated Flanger tap with subtle feedback
       final double fDelay =
           flangerBase + flangerDepth * math.sin(i * flangerRate + 1.2);
       final double fReadPos = modWrite - fDelay;
       final double fSample =
           _readCircularLinear(flangerBuf, fReadPos, modBufLen);
-      flangerBuf[modWrite] = x + fSample * 0.18;
+      flangerBuf[modWrite] = x + fSample * 0.14;
 
-      modulated[i] = x * 0.68 + cSample * 0.26 + fSample * 0.14;
+      modulated[i] = x * 0.68 + cSample * 0.26 + fSample * 0.12;
       modWrite = (modWrite + 1) % modBufLen;
     }
 
     // --- 5. Dark Dreamy Plate/Room Reverb (4 damped combs + 2 all-pass) ---
     const List<int> combDelays = <int>[655, 818, 907, 964]; // ~30–44 ms
-    const double combFeedback = 0.78;
-    const double combDamp = 0.42; // Dark velvety tail
+    const double combFeedback = 0.80;
+    const double combDamp = 0.58; // Extra-dark velvety reverb tail
     final List<Float64List> combBufs =
         combDelays.map((int len) => Float64List(len)).toList(growable: false);
     final List<int> combIdx = List<int>.filled(combDelays.length, 0);
@@ -343,6 +344,11 @@ class ChordSynthesizer {
     final List<Float64List> apBufs =
         apDelays.map((int len) => Float64List(len)).toList(growable: false);
     final List<int> apIdx = List<int>.filled(apDelays.length, 0);
+
+    // Gentle 1-pole post-FX tone warmer (~2.2 kHz) to keep highs silky.
+    const double postRc = 1.0 / (2.0 * math.pi * 2200.0);
+    const double postAlpha = dt / (postRc + dt);
+    double postLp = 0.0;
 
     final Float64List output = Float64List(n);
     for (int i = 0; i < n; i++) {
@@ -369,7 +375,9 @@ class ChordSynthesizer {
         apIdx[a] = (idx + 1) % apDelays[a];
       }
 
-      output[i] = x * 0.72 + rev * 0.34;
+      final double wet = x * 0.70 + rev * 0.36;
+      postLp += postAlpha * (wet - postLp);
+      output[i] = postLp;
     }
 
     return output;
