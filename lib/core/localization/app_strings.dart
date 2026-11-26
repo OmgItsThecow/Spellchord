@@ -663,4 +663,11 @@ class AppStrings {
   String get ctxMoveLeft => isEs ? 'Mover a la izquierda' : 'Move left';
   String get ctxMoveRight => isEs ? 'Mover a la derecha' : 'Move right';
   String get ctxDeleteChord => isEs ? 'Eliminar acorde' : 'Delete chord';
+
+  String get ctxFlipToMinor => isEs ? 'Cambiar a Menor' : 'Flip to Minor';
+  String get ctxFlipToMajor => isEs ? 'Cambiar a Mayor' : 'Flip to Major';
+
+  String ctxInsertSecDom(String domSymbol) => isEs
+      ? 'Insertar $domSymbol antes (V7)'
+      : 'Insert $domSymbol before (V7)';
 }

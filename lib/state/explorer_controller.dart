@@ -536,6 +536,68 @@ class ExplorerController extends ChangeNotifier {
     playSelectedChord();
   }
 
+  /// Flips a Major chord to Minor (or Minor to Major) while adapting its 7th
+  /// quality naturally (e.g., Gmaj7 <-> Gm7, C <-> Cm).
+  void toggleChordQualityAt(int index) {
+    if (index < 0 || index >= _progression.length) {
+      return;
+    }
+    final ChordSpec current = _progression[index];
+    if (current.triad != TriadQuality.major &&
+        current.triad != TriadQuality.minor) {
+      return;
+    }
+    stopProgressionPlayback();
+    _pushUndoSnapshot();
+
+    final bool toMinor = current.triad == TriadQuality.major;
+    final TriadQuality nextTriad =
+        toMinor ? TriadQuality.minor : TriadQuality.major;
+    final SeventhQuality nextSeventh = switch (current.seventh) {
+      SeventhQuality.none => SeventhQuality.none,
+      SeventhQuality.major7 || SeventhQuality.dominant7 when toMinor =>
+        SeventhQuality.minor7,
+      SeventhQuality.minor7 when !toMinor => SeventhQuality.major7,
+      _ => current.seventh,
+    };
+
+    _progression[index] = current.copyWith(
+      triad: nextTriad,
+      seventh: nextSeventh,
+      clearManualInversion: true,
+      voicingVariantIndex: 0,
+    );
+    _activePresetName = null;
+    _selectedChordIndex = index;
+    _recompute();
+    notifyListeners();
+    playSelectedChord();
+  }
+
+  /// Inserts the secondary dominant (V7 of the chord at [index]) directly
+  /// before it in the progression.
+  void insertSecondaryDominantBefore(int index) {
+    if (index < 0 || index >= _progression.length) {
+      return;
+    }
+    stopProgressionPlayback();
+    _pushUndoSnapshot();
+
+    final int targetRoot = _progression[index].normalizedRootPc;
+    final int dominantRoot = (targetRoot + 7) % 12;
+    final ChordSpec secDom = ChordSpec.dominant7(
+      dominantRoot,
+      id: 'secdom_${DateTime.now().microsecondsSinceEpoch}_$index',
+    );
+
+    _progression.insert(index, secDom);
+    _activePresetName = null;
+    _selectedChordIndex = index;
+    _recompute();
+    notifyListeners();
+    playSelectedChord();
+  }
+
   void removeChordAt(int index) {
     if (_progression.length <= 1 || index < 0 || index >= _progression.length) {
       return;

@@ -364,6 +364,22 @@ void main() {
       expect(controller.progression[1].id, isNot(originalFirst.id));
       expect(controller.undo(), isTrue);
       expect(controller.progression.length, initialLen + 1);
+
+      // Flip Gmaj7 (index 0) -> Gm7 -> Gmaj7
+      expect(controller.progression[0].triad, TriadQuality.major);
+      controller.toggleChordQualityAt(0);
+      expect(controller.progression[0].triad, TriadQuality.minor);
+      expect(controller.progression[0].seventh, SeventhQuality.minor7);
+      controller.toggleChordQualityAt(0);
+      expect(controller.progression[0].triad, TriadQuality.major);
+      expect(controller.progression[0].seventh, SeventhQuality.major7);
+
+      // Insert Secondary Dominant (D7) before Gmaj7 at index 0
+      controller.insertSecondaryDominantBefore(0);
+      expect(controller.progression[0].rootPc, (7 + 7) % 12); // D7
+      expect(controller.progression[0].seventh, SeventhQuality.dominant7);
+      expect(controller.undo(), isTrue);
+      expect(controller.progression[0].rootPc, 7); // Back to Gmaj7
     });
   });
 

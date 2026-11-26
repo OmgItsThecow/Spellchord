@@ -6,6 +6,7 @@ import '../../core/localization/app_strings.dart';
 import '../../core/models/chord_spec.dart';
 import '../../core/models/chord_voicing.dart';
 import '../../core/models/harmonic_function.dart';
+import '../../core/models/interval_profile.dart';
 import '../../core/models/midi_pitch.dart';
 import '../../state/explorer_controller.dart';
 import '../theme/dark_theme.dart';
@@ -273,6 +274,14 @@ class _ProgressionTimelineState extends State<ProgressionTimeline> {
                                     controller.duplicateChordAt(index),
                                 onNextInversion: () =>
                                     controller.stepInversion(index, 1),
+                                onFlipQuality:
+                                    (chord.triad == TriadQuality.major ||
+                                            chord.triad == TriadQuality.minor)
+                                        ? () => controller
+                                            .toggleChordQualityAt(index)
+                                        : null,
+                                onInsertSecDom: () => controller
+                                    .insertSecondaryDominantBefore(index),
                                 onDelete: progression.length > 1
                                     ? () => controller.removeChordAt(index)
                                     : null,
@@ -322,6 +331,8 @@ class _ChordCard extends StatelessWidget {
     required this.onEdit,
     required this.onDuplicate,
     required this.onNextInversion,
+    required this.onFlipQuality,
+    required this.onInsertSecDom,
     required this.onDelete,
     required this.onMoveLeft,
     required this.onMoveRight,
@@ -342,6 +353,8 @@ class _ChordCard extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDuplicate;
   final VoidCallback onNextInversion;
+  final VoidCallback? onFlipQuality;
+  final VoidCallback onInsertSecDom;
   final VoidCallback? onDelete;
   final VoidCallback? onMoveLeft;
   final VoidCallback? onMoveRight;
@@ -354,6 +367,10 @@ class _ChordCard extends StatelessWidget {
     final RenderBox overlay =
         Overlay.of(context).context.findRenderObject()! as RenderBox;
     final Offset pos = details.globalPosition;
+
+    final int domRootPc = (chord.normalizedRootPc + 7) % 12;
+    final String domSymbol =
+        '${MidiPitch.pitchClassName(domRootPc, preferFlat: preferFlat)}7';
 
     final String? action = await showMenu<String>(
       context: context,
@@ -375,6 +392,20 @@ class _ChordCard extends StatelessWidget {
         _ctxItem('edit', Icons.edit_rounded, strings.ctxEditChord),
         _ctxItem('play', Icons.play_arrow_rounded, strings.ctxPlayChord),
         _ctxItem('invert', Icons.swap_vert_rounded, strings.ctxNextInversion),
+        const PopupMenuDivider(height: 8),
+        if (onFlipQuality != null)
+          _ctxItem(
+            'flip',
+            Icons.contrast_rounded,
+            chord.triad == TriadQuality.major
+                ? strings.ctxFlipToMinor
+                : strings.ctxFlipToMajor,
+          ),
+        _ctxItem(
+          'secdom',
+          Icons.auto_awesome_rounded,
+          strings.ctxInsertSecDom(domSymbol),
+        ),
         if (onMoveLeft != null || onMoveRight != null)
           const PopupMenuDivider(height: 8),
         if (onMoveLeft != null)
@@ -405,6 +436,12 @@ class _ChordCard extends StatelessWidget {
         break;
       case 'invert':
         onNextInversion();
+        break;
+      case 'flip':
+        onFlipQuality?.call();
+        break;
+      case 'secdom':
+        onInsertSecDom();
         break;
       case 'left':
         onMoveLeft?.call();
