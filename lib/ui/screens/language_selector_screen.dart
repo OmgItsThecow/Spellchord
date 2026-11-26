@@ -87,15 +87,6 @@ class LanguageSelectorScreen extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Elige tu idioma antes de comenzar',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: AppDarkTheme.textSecondary,
-                        fontSize: 13.5,
-                      ),
-                    ),
                     const SizedBox(height: 22),
 
                     // Language selection cards
@@ -123,16 +114,6 @@ class LanguageSelectorScreen extends StatelessWidget {
                           ),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    const Text(
-                      'You can switch between EN / ES anytime in the top bar.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: AppDarkTheme.textMuted,
-                        fontSize: 11.5,
-                      ),
                     ),
                   ],
                 ),

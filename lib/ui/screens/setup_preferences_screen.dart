@@ -87,21 +87,11 @@ class _SetupPreferencesScreenState extends State<SetupPreferencesScreen> {
                     const SizedBox(height: 22),
 
                     Text(
-                      strings.setupTitle,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: AppDarkTheme.textPrimary,
-                        fontSize: 16.5,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
                       strings.setupSubtitle,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         color: AppDarkTheme.textSecondary,
-                        fontSize: 13,
+                        fontSize: 13.5,
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -231,16 +221,6 @@ class _SetupPreferencesScreenState extends State<SetupPreferencesScreen> {
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-
-                    Text(
-                      strings.setupFooterHint,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: AppDarkTheme.textMuted,
-                        fontSize: 11.5,
                       ),
                     ),
                   ],
